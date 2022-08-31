@@ -17,6 +17,7 @@
     <li>Free Memory</li>
     <li>Read/Write</li>
     <li>Read/Write String</li>
+    <li>Mouse Events</li>
 </ul>
 
 ## Setup
