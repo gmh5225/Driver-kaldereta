@@ -5,7 +5,7 @@
 <h1 align="center">Kaldereta</h1>
 
 <p align="center">
-    Unsigned Kernel Mode Driver to read and write to process
+    Unsigned Kernel Mode Driver that does memory modifications
 </p>
 
 ## Features
