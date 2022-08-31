@@ -3,6 +3,7 @@
 #include <ntddk.h>
 #include <windef.h>
 #include <ntstrsafe.h>
+#include <ntddmou.h>
 #include <wdm.h>
 
 #pragma comment(lib, "ntoskrnl.lib")
@@ -16,6 +17,9 @@ typedef struct __KALDERETA_MEMORY
 	ULONG64 baseAddress;
 	ULONGLONG imageSize;
 	ULONGLONG size;
+	long x;
+	long y;
+	unsigned short buttonFlags;
 
 	BOOLEAN reqBase;
 	BOOLEAN virtualProtect;
@@ -25,6 +29,7 @@ typedef struct __KALDERETA_MEMORY
 	BOOLEAN writeString;
 	BOOLEAN read;
 	BOOLEAN readString;
+	BOOLEAN mouseEvent;
 
 	const char* moduleName;
 
@@ -286,3 +291,34 @@ RtlImageNtHeader(PVOID Base);
      FIELD_OFFSET( IMAGE_NT_HEADERS64, OptionalHeader ) +                 \
      ((ntheader))->FileHeader.SizeOfOptionalHeader   \
     ))
+
+extern "C" POBJECT_TYPE * IoDriverObjectType;
+
+typedef VOID
+(*MouseClassServiceCallback)(
+	PDEVICE_OBJECT DeviceObject,
+	PMOUSE_INPUT_DATA InputDataStart,
+	PMOUSE_INPUT_DATA InputDataEnd,
+	PULONG InputDataConsumed
+);
+
+typedef struct _MOUSE_OBJECT
+{
+	PDEVICE_OBJECT mouse_device;
+	MouseClassServiceCallback service_callback;
+} MOUSE_OBJECT, * PMOUSE_OBJECT;
+
+extern "C"
+NTSYSAPI
+NTSTATUS
+NTAPI
+ObReferenceObjectByName(
+	_In_ PUNICODE_STRING ObjectName,
+	_In_ ULONG Attributes,
+	_In_opt_ PACCESS_STATE AccessState,
+	_In_opt_ ACCESS_MASK DesiredAccess,
+	_In_ POBJECT_TYPE ObjectType,
+	_In_ KPROCESSOR_MODE AccessMode,
+	_Inout_opt_ PVOID ParseContext,
+	_Out_ PVOID * Object
+);

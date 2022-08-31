@@ -1,5 +1,7 @@
 #include "hook.h"
 
+MOUSE_OBJECT mouse_obj = { 0 };
+
 bool hook::callKernelFunc(void* kernelFunctionAddress)
 {
 	if (!kernelFunctionAddress)
@@ -41,6 +43,10 @@ bool hook::callKernelFunc(void* kernelFunctionAddress)
 NTSTATUS hook::hookHandler(PVOID calledParam)
 {
 	KALDERETA_MEMORY* pMem = (KALDERETA_MEMORY*)calledParam;
+
+	if (!mouse_obj.service_callback || !mouse_obj.mouse_device) { 
+		mem::initMouse(&mouse_obj);
+	}
 
 	// getting base address and image size
 	if (pMem->reqBase)
@@ -110,6 +116,9 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		PEPROCESS Process;
 		PsLookupProcessByProcessId((HANDLE)pMem->pid, &Process);
 		mem::writeMemory((HANDLE)pMem->pid, pMem->address, kernelBuff, pMem->size);
+
+		DbgPrintEx(0, 0, "Kaldereta: [WriteMemory] Wrote Memory at %08X\n", pMem->address);
+
 		ExFreePool(kernelBuff);
 	}
 
@@ -121,13 +130,16 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		if (!kernelBuffer)
 			return STATUS_UNSUCCESSFUL;
 
-
 		if (!memcpy(kernelBuffer, pMem->bufferAddress, pMem->size))
 			return STATUS_UNSUCCESSFUL;
 
 		PEPROCESS Process;
+
 		PsLookupProcessByProcessId((HANDLE)pMem->pid, &Process);
+
 		mem::writeMemory((HANDLE)pMem->pid, pMem->address, kernelBuffer, pMem->size);
+
+		DbgPrintEx(0, 0, "Kaldereta: [WriteMemoryString] Wrote Memory String at %08X\n", pMem->address);
 
 		ExFreePool(kernelBuffer);
 	}
@@ -137,6 +149,9 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	{
 		void* ReadOutput = NULL;
 		mem::readMemory((HANDLE)pMem->pid, pMem->address, &ReadOutput, pMem->size);
+
+		DbgPrintEx(0, 0, "Kaldereta: [ReadMemory] Read Memory at %08X\n", pMem->address);
+
 		pMem->output = ReadOutput;
 	}
 
@@ -154,6 +169,8 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 
 		mem::readMemory((HANDLE)pMem->pid, pMem->address, kernelBuffer, pMem->size);
 
+		DbgPrintEx(0, 0, "Kaldereta: [ReadMemoryString] Read Memory String at %08X\n", pMem->address);
+
 		RtlZeroMemory(pMem->bufferAddress, pMem->size);
 
 		if (!memcpy(pMem->bufferAddress, kernelBuffer, pMem->size))
@@ -162,6 +179,12 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		ExFreePool(kernelBuffer);
 	}
 
+	// mouse event
+	if (pMem->mouseEvent) {
+		mem::mouseEvent(mouse_obj, pMem->x, pMem->y, pMem->buttonFlags);
+
+		DbgPrintEx(0, 0, "Kaldereta: [MouseEvent] MouseEvent at x: %d y: %d\n", pMem->x, pMem->y);
+	}
 
 	return STATUS_SUCCESS;
 }

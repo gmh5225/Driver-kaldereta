@@ -15,4 +15,6 @@ namespace mem {
 	NTSTATUS protectMemory(ULONG64 pid, PVOID address, ULONG size, ULONG protection, ULONG& protection_out);
 	NTSTATUS allocateMemory(ULONG64 pid, SIZE_T size, ULONG protection, PVOID& address_out);
 	NTSTATUS freeMemory(ULONG64 pid, PVOID address, SIZE_T& size_out);
+	NTSTATUS initMouse(PMOUSE_OBJECT mouse_obj);
+	bool mouseEvent(MOUSE_OBJECT mouse_obj, long x, long y, unsigned short button_flags);
 }
