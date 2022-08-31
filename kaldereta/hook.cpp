@@ -9,7 +9,7 @@ bool hook::callKernelFunc(void* kernelFunctionAddress)
 
 	if (!function)
 	{
-		DbgPrintEx(0, 0, "Sinigang: [CallKernelFunction] function not found\n");
+		DbgPrintEx(0, 0, "Kaldereta: [CallKernelFunction] function not found\n");
 		return false;
 	}
 
@@ -61,8 +61,8 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		pMem->baseAddress = baseAddress64;
 		pMem->imageSize = imageSize;
 
-		DbgPrintEx(0, 0, "Sinigang: [BaseAddress] - %012X\n", pMem->baseAddress);
-		DbgPrintEx(0, 0, "Sinigang: [ImageSize] - %012X\n", imageSize);
+		DbgPrintEx(0, 0, "Kaldereta: [BaseAddress] - %012X\n", pMem->baseAddress);
+		DbgPrintEx(0, 0, "Kaldereta: [ImageSize] - %012X\n", imageSize);
 
 		RtlFreeUnicodeString(&moduleName);
 	}
@@ -71,7 +71,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	if (pMem->virtualProtect)
 	{
 		if (NT_SUCCESS(mem::protectMemory(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->protection, pMem->oldProtection)))
-			DbgPrintEx(0, 0, "Sinigang: [VirtualProtect] Succefully Changed Protection at %08X\n", pMem->address);
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Succefully Changed Protection at %08X\n", pMem->address);
 	}
 
 	// allocate memory
@@ -79,9 +79,9 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	{
 		PVOID address;
 		if (NT_SUCCESS(mem::allocateMemory(pMem->pid, pMem->size, pMem->protection, address)))
-			DbgPrintEx(0, 0, "Sinigang: [AllocateMemory] Allocated Memory at %08X\n", address);
+			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Allocated Memory at %08X\n", address);
 		else
-			DbgPrintEx(0, 0, "Sinigang: [AllocateMemory] Failed Allocation Memory\n");
+			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Failed Allocation Memory\n");
 
 		pMem->address = (UINT_PTR)address;
 	}
@@ -91,7 +91,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	{
 		SIZE_T size;
 		if (NT_SUCCESS(mem::freeMemory(pMem->pid, (PVOID)pMem->address, size)))
-			DbgPrintEx(0, 0, "Sinigang: [FreeMemory] Freed %08X at %08X\n", size, pMem->address);
+			DbgPrintEx(0, 0, "Kaldereta: [FreeMemory] Freed %08X at %08X\n", size, pMem->address);
 
 		pMem->size = size;
 	}
