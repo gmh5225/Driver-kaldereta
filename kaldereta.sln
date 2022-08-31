@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32819.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kaldereta", "kaldereta\kaldereta.vcxproj", "{93F27606-B0D1-49BB-8635-02E9FCFACBC7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
+		Debug|x64 = Debug|x64
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Debug|ARM64.Build.0 = Debug|ARM64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Debug|ARM64.Deploy.0 = Debug|ARM64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Debug|x64.ActiveCfg = Debug|x64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Debug|x64.Build.0 = Debug|x64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Debug|x64.Deploy.0 = Debug|x64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Release|ARM64.ActiveCfg = Release|ARM64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Release|ARM64.Build.0 = Release|ARM64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Release|ARM64.Deploy.0 = Release|ARM64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Release|x64.ActiveCfg = Release|x64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Release|x64.Build.0 = Release|x64
+		{93F27606-B0D1-49BB-8635-02E9FCFACBC7}.Release|x64.Deploy.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {25773022-F974-4A08-B644-2A283AA845A5}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,77 @@
+;
+; kaldereta.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System ; TODO: specify appropriate Class
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
+Provider=%ManufacturerName%
+CatalogFile=kaldereta.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+kaldereta_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+kaldereta.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%kaldereta.DeviceDesc%=kaldereta_Device, Root\kaldereta ; TODO: edit hw-id
+
+[kaldereta_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+kaldereta.sys
+
+;-------------- Service installation
+[kaldereta_Device.NT.Services]
+AddService = kaldereta,%SPSVCINST_ASSOCSERVICE%, kaldereta_Service_Inst
+
+; -------------- kaldereta driver install sections
+[kaldereta_Service_Inst]
+DisplayName    = %kaldereta.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\kaldereta.sys
+
+;
+;--- kaldereta_Device Coinstaller installation ------
+;
+
+[kaldereta_Device.NT.CoInstallers]
+AddReg=kaldereta_Device_CoInstaller_AddReg
+CopyFiles=kaldereta_Device_CoInstaller_CopyFiles
+
+[kaldereta_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[kaldereta_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[kaldereta_Device.NT.Wdf]
+KmdfService =  kaldereta, kaldereta_wdfsect
+[kaldereta_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="<Your manufacturer name>" ;TODO: Replace with your manufacturer name
+DiskName = "kaldereta Installation Disk"
+kaldereta.DeviceDesc = "kaldereta Device"
+kaldereta.SVCDESC = "kaldereta Service"
