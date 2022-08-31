@@ -5,7 +5,7 @@ bool hook::callKernelFunc(void* kernelFunctionAddress)
 	if (!kernelFunctionAddress)
 		return false;
 
-	PVOID* function = reinterpret_cast<PVOID*>(mem::getModuleExport("\\SystemRoot\\System32\\drivers\\dxgkrnl.sys", "NtTokenManagerGetAnalogExclusiveTokenEvent")); //NtFlipObjectCreate
+	PVOID* function = reinterpret_cast<PVOID*>(mem::getModuleExport("\\SystemRoot\\System32\\drivers\\dxgkrnl.sys", "NtTokenManagerGetAnalogExclusiveTokenEvent"));
 
 	if (!function)
 	{
