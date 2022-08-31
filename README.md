@@ -1,3 +1,7 @@
+<p align="center">
+    <img src='./preview.png' alt='Kaldereta Preview'/>
+</p>
+
 <h1 align="center">Kaldereta</h1>
 
 <p align="center">
@@ -6,6 +10,7 @@
 
 ## Setup
 
+Install [Windows Driver Kit](https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk)
 Load sys file with [KDMapper](https://github.com/TheCruZ/kdmapper)
 
 ## Support
