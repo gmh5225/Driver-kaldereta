@@ -8,6 +8,17 @@
     Unsigned Kernel Mode Driver to read and write to process
 </p>
 
+## Features
+
+<ul>
+    <li>Base Address/Image Size</li>
+    <li>Protection</li>
+    <li>Allocation</li>
+    <li>Free Memory</li>
+    <li>Read/Write</li>
+    <li>Read/Write String</li>
+</ul>
+
 ## Setup
 
 Install [Windows Driver Kit](https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk)
