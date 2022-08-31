@@ -22,7 +22,8 @@
 ## Setup
 
 Install [Windows Driver Kit](https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk)
-Load sys file with [KDMapper](https://github.com/TheCruZ/kdmapper)
+
+Load .sys file with [KDMapper](https://github.com/TheCruZ/kdmapper)
 
 ## Support
 
