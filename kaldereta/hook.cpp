@@ -48,10 +48,10 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 {
 	KALDERETA_MEMORY* pMem = (KALDERETA_MEMORY*)calledParam;
 	
-	/*if (!mouse_obj.service_callback || !mouse_obj.mouse_device) {
+	if (!mouse_obj.service_callback || !mouse_obj.mouse_device) {
 		DbgPrintEx(0, 0, "Kaldereta: [MouseEvent] Initializing Mouse Service\n");
 		mem::initMouse(&mouse_obj);
-	}*/
+	}
 
 	// getting base address and image size
 	if (pMem->reqBase != FALSE)
