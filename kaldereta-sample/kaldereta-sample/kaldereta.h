@@ -68,7 +68,8 @@ namespace kdt {
 	template<typename ... A>
 	uint64_t callHook(const A ... args)
 	{
-		void* controlFunction = GetProcAddress(LoadLibrary(L"win32u.dll"), "NtTokenManagerGetAnalogExclusiveTokenEvent");
+		LoadLibrary(L"user32.dll");
+		void* controlFunction = (void*)GetProcAddress(LoadLibrary(L"win32u.dll"), "NtTokenManagerGetAnalogExclusiveTokenEvent");
 		const auto control = static_cast<uint64_t(__stdcall*)(A...)>(controlFunction);
 		return control(args ...);
 	}
