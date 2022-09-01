@@ -4,8 +4,10 @@ MOUSE_OBJECT mouse_obj = { 0 };
 
 bool hook::callKernelFunc(void* kernelFunctionAddress)
 {
-	if (!kernelFunctionAddress)
+	if (!kernelFunctionAddress) {
+		DbgPrintEx(0, 0, "Kaldereta: [CallKernelFunction] kernel function address not found\n");
 		return false;
+	}
 
 	PVOID* function = reinterpret_cast<PVOID*>(mem::getModuleExport("\\SystemRoot\\System32\\drivers\\dxgkrnl.sys", "NtTokenManagerGetAnalogExclusiveTokenEvent"));
 
@@ -31,7 +33,9 @@ bool hook::callKernelFunc(void* kernelFunctionAddress)
 	RtlSecureZeroMemory(&orig, sizeof(orig));
 
 	memcpy((PVOID)((ULONG_PTR)orig), shellCodeStart, sizeof(shellCodeStart));
+
 	uintptr_t hookAddress = reinterpret_cast<uintptr_t>(kernelFunctionAddress);
+
 	memcpy((PVOID)((ULONG_PTR)orig + sizeof(shellCodeStart)), &hookAddress, sizeof(void*));
 	memcpy((PVOID)((ULONG_PTR)orig + sizeof(shellCodeStart) + sizeof(void*)), &shellCodeEnd, sizeof(shellCodeEnd));
 
@@ -43,13 +47,14 @@ bool hook::callKernelFunc(void* kernelFunctionAddress)
 NTSTATUS hook::hookHandler(PVOID calledParam)
 {
 	KALDERETA_MEMORY* pMem = (KALDERETA_MEMORY*)calledParam;
-
-	if (!mouse_obj.service_callback || !mouse_obj.mouse_device) { 
+	
+	/*if (!mouse_obj.service_callback || !mouse_obj.mouse_device) {
+		DbgPrintEx(0, 0, "Kaldereta: [MouseEvent] Initializing Mouse Service\n");
 		mem::initMouse(&mouse_obj);
-	}
+	}*/
 
 	// getting base address and image size
-	if (pMem->reqBase)
+	if (pMem->reqBase != FALSE)
 	{
 		ANSI_STRING AS;
 		UNICODE_STRING moduleName;
@@ -74,14 +79,14 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	}
 
 	// changing memory protection
-	if (pMem->virtualProtect)
+	if (pMem->virtualProtect != FALSE)
 	{
 		if (NT_SUCCESS(mem::protectMemory(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->protection, pMem->oldProtection)))
 			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Succefully Changed Protection at %08X\n", pMem->address);
 	}
 
 	// allocate memory
-	if (pMem->allocateMemory)
+	if (pMem->allocateMemory != FALSE)
 	{
 		PVOID address;
 		if (NT_SUCCESS(mem::allocateMemory(pMem->pid, pMem->size, pMem->protection, address)))
@@ -93,7 +98,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	}
 
 	// free memory
-	if (pMem->freeMemory)
+	if (pMem->freeMemory != FALSE)
 	{
 		SIZE_T size;
 		if (NT_SUCCESS(mem::freeMemory(pMem->pid, (PVOID)pMem->address, size)))
@@ -103,7 +108,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	}
 
 	// write to memory
-	if (pMem->write)
+	if (pMem->write != FALSE)
 	{
 		PVOID kernelBuff = ExAllocatePool(NonPagedPool, pMem->size);
 
@@ -123,7 +128,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	}
 
 	// write string to memory
-	if (pMem->writeString)
+	if (pMem->writeString != FALSE)
 	{
 		PVOID kernelBuffer = ExAllocatePool(NonPagedPool, pMem->size);
 
@@ -145,7 +150,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	}
 
 	// read from memory
-	if (pMem->read)
+	if (pMem->read != FALSE)
 	{
 		void* ReadOutput = NULL;
 		mem::readMemory((HANDLE)pMem->pid, pMem->address, &ReadOutput, pMem->size);
@@ -156,7 +161,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	}
 
 	// read string from memory
-	if (pMem->readString)
+	if (pMem->readString != FALSE)
 	{
 		PVOID kernelBuffer = ExAllocatePool(NonPagedPool, pMem->size);
 
@@ -180,7 +185,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	}
 
 	// mouse event
-	if (pMem->mouseEvent) {
+	if (pMem->mouseEvent != FALSE) {
 		mem::mouseEvent(mouse_obj, pMem->x, pMem->y, pMem->buttonFlags);
 
 		DbgPrintEx(0, 0, "Kaldereta: [MouseEvent] MouseEvent at x: %d y: %d\n", pMem->x, pMem->y);
