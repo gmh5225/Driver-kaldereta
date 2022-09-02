@@ -59,6 +59,22 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		mem::initKeyboard(&keyboard_obj);
 	}
 
+	// get process id
+	if (pMem->reqProcessId != FALSE) {
+		ANSI_STRING AS;
+		UNICODE_STRING process_name;
+
+		RtlInitAnsiString(&AS, pMem->moduleName);
+		RtlAnsiStringToUnicodeString(&process_name, &AS, TRUE);
+
+		ULONG proc_id = mem::getProcessId(process_name);
+		pMem->pid = proc_id;
+
+		DbgPrintEx(0, 0, "Kaldereta: [ProcessID] - %08X\n", pMem->pid);
+
+		RtlFreeUnicodeString(&process_name);
+	}
+
 	// getting base address and image size
 	if (pMem->reqBaseAddress != FALSE)
 	{
@@ -128,15 +144,15 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 
 		PEPROCESS Process;
 		PsLookupProcessByProcessId((HANDLE)pMem->pid, &Process);
-		mem::writeMemory((HANDLE)pMem->pid, pMem->address, kernelBuff, pMem->size);
+		mem::writeBuffer((HANDLE)pMem->pid, pMem->address, kernelBuff, pMem->size);
 
 		DbgPrintEx(0, 0, "Kaldereta: [WriteMemory] Wrote Memory at %012X\n", pMem->address);
 
 		ExFreePool(kernelBuff);
 	}
 
-	// write string to memory
-	if (pMem->writeString != FALSE)
+	// write to memory from buffer
+	if (pMem->writeBuffer != FALSE)
 	{
 		PVOID kernelBuffer = ExAllocatePool(NonPagedPool, pMem->size);
 
@@ -150,9 +166,9 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 
 		PsLookupProcessByProcessId((HANDLE)pMem->pid, &Process);
 
-		mem::writeMemory((HANDLE)pMem->pid, pMem->address, kernelBuffer, pMem->size);
+		mem::writeBuffer((HANDLE)pMem->pid, pMem->address, kernelBuffer, pMem->size);
 
-		DbgPrintEx(0, 0, "Kaldereta: [WriteMemoryString] Wrote Memory String at %012X\n", pMem->address);
+		DbgPrintEx(0, 0, "Kaldereta: [WriteToBuffer] Wrote Buffer to %012X\n", pMem->address);
 
 		ExFreePool(kernelBuffer);
 	}
@@ -161,15 +177,15 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	if (pMem->read != FALSE)
 	{
 		void* ReadOutput = NULL;
-		mem::readMemory((HANDLE)pMem->pid, pMem->address, &ReadOutput, pMem->size);
+		mem::readBuffer((HANDLE)pMem->pid, pMem->address, &ReadOutput, pMem->size);
 
 		DbgPrintEx(0, 0, "Kaldereta: [ReadMemory] Read Memory at %012X\n", pMem->address);
 
 		pMem->output = ReadOutput;
 	}
 
-	// read string from memory
-	if (pMem->readString != FALSE)
+	// read from memory to buffer
+	if (pMem->readBuffer != FALSE)
 	{
 		PVOID kernelBuffer = ExAllocatePool(NonPagedPool, pMem->size);
 
@@ -180,9 +196,9 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		if (!memcpy(kernelBuffer, pMem->bufferAddress, pMem->size))
 			return STATUS_UNSUCCESSFUL;
 
-		mem::readMemory((HANDLE)pMem->pid, pMem->address, kernelBuffer, pMem->size);
+		mem::readBuffer((HANDLE)pMem->pid, pMem->address, kernelBuffer, pMem->size);
 
-		DbgPrintEx(0, 0, "Kaldereta: [ReadMemoryString] Read Memory String at %012X\n", pMem->address);
+		DbgPrintEx(0, 0, "Kaldereta: [ReadToBuffer] Read from Buffer at %012X\n", pMem->address);
 
 		RtlZeroMemory(pMem->bufferAddress, pMem->size);
 
@@ -204,22 +220,6 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		mem::keyboardEvent(keyboard_obj, pMem->keyCode, pMem->buttonFlags);
 
 		DbgPrintEx(0, 0, "Kaldereta: [KeyboardEvent] MouseEvent KeyCode: %08X, Flags: %08X\n", pMem->keyCode, pMem->buttonFlags);
-	}
-
-	// get process id
-	if (pMem->reqProcessId != FALSE) {
-		ANSI_STRING AS;
-		UNICODE_STRING process_name;
-
-		RtlInitAnsiString(&AS, pMem->moduleName);
-		RtlAnsiStringToUnicodeString(&process_name, &AS, TRUE);
-
-		ULONG proc_id = mem::getProcessId(process_name);
-		pMem->pid = proc_id;
-
-		DbgPrintEx(0, 0, "Kaldereta: [ProcessID] - %08X\n", pMem->pid);
-
-		RtlFreeUnicodeString(&process_name);
 	}
 
 	return STATUS_SUCCESS;

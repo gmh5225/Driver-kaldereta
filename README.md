@@ -11,16 +11,18 @@
 ## Features
 
 <ul>
-    <li>Process ID</li>
-    <li>Base Address</li>
-    <li>Image Size</li>
-    <li>Protection</li>
-    <li>Allocation</li>
-    <li>Free Memory</li>
-    <li>Read/Write</li>
-    <li>Read/Write String</li>
-    <li>Mouse Event</li>
-    <li>Keyboard Event</li>
+    <li>get process id</li>
+    <li>get base address of an image</li>
+    <li>change protection of a memory region</li>
+    <li>allocate memory region</li>
+    <li>free memory</li>
+    <li>read/write from address</li>
+    <li>read/write from address with offset</li>
+    <li>read from memory to buffer</li>
+    <li>write to memory from buffer</li>
+    <li>simulate mouse events</li>
+    <li>simulate keyboard events</li>
+    <li>pattern scan</li>
 </ul>
 
 ## Setup

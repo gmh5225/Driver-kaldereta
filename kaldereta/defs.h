@@ -29,9 +29,9 @@ typedef struct __KALDERETA_MEMORY
 	BOOLEAN allocateMemory;
 	BOOLEAN freeMemory;
 	BOOLEAN write;
-	BOOLEAN writeString;
+	BOOLEAN writeBuffer;
 	BOOLEAN read;
-	BOOLEAN readString;
+	BOOLEAN readBuffer;
 	BOOLEAN mouseEvent;
 	BOOLEAN keyboardEvent;
 

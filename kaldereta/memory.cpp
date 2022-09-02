@@ -108,7 +108,7 @@ ULONG64 mem::getModuleBase64(PEPROCESS proc, UNICODE_STRING moduleName, ULONGLON
 	return 0;
 }
 
-bool mem::readMemory(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size)
+bool mem::readBuffer(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size)
 {
 	if (!address || !buffer || !size)
 		return false;
@@ -125,7 +125,7 @@ bool mem::readMemory(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size)
 	return true;
 }
 
-bool mem::writeMemory(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size)
+bool mem::writeBuffer(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size)
 {
 	if (!address || !buffer || !size)
 		return false;

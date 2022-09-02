@@ -27,9 +27,9 @@ typedef struct __KALDERETA_MEMORY
 	BOOLEAN allocateMemory;
 	BOOLEAN freeMemory;
 	BOOLEAN write;
-	BOOLEAN writeString;
+	BOOLEAN writeBuffer;
 	BOOLEAN read;
-	BOOLEAN readString;
+	BOOLEAN readBuffer;
 	BOOLEAN mouseEvent;
 	BOOLEAN keyboardEvent;
 
@@ -72,6 +72,30 @@ namespace kdt {
 			for (int iLength = 1; iLength < MAX_PATH; iLength++)
 				if (iArray[iLength] == '*')
 					return iLength;
+			return 0;
+		}
+
+		uintptr_t compare(char* base, unsigned int size, char* pattern, char* mask)
+		{
+			size_t patternLength = strlen(mask);
+
+			for (uintptr_t i = 0; i < size - patternLength; i++)
+			{
+				bool found = true;
+				for (uintptr_t j = 0; j < patternLength; j++)
+				{
+					if (mask[j] != '?' && pattern[j] != *(char*)(base + i + j))
+					{
+						found = false;
+						break;
+					}
+				}
+
+				if (found)
+				{
+					return (uintptr_t)base + i;
+				}
+			}
 			return 0;
 		}
 
@@ -148,7 +172,7 @@ namespace kdt {
 		return callHook(&m);
 	}
 
-	// add memory region
+	// allocate memory region
 	static ULONG64 allocateMemory(std::size_t size, uint32_t protection)
 	{
 		KALDERETA_MEMORY m = { 0 };
@@ -233,13 +257,13 @@ namespace kdt {
 		return write<T>(read<T>(dwAddress, Offset, false), Value);
 	}
 
-	// read string from address
-	static bool readString(UINT_PTR address, void* buffer, SIZE_T size)
+	// read from memory to buffer
+	static bool readBuffer(UINT_PTR address, void* buffer, SIZE_T size)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
-		m.readString = TRUE;
+		m.readBuffer = TRUE;
 		m.address = address;
 		m.bufferAddress = buffer;
 		m.size = size;
@@ -249,13 +273,13 @@ namespace kdt {
 		return true;
 	}
 
-	// write string to address
-	static bool writeString(UINT_PTR address, void* buffer, SIZE_T size)
+	// write to memory from buffer
+	static bool writeBuffer(UINT_PTR address, void* buffer, SIZE_T size)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
-		m.writeString = TRUE;
+		m.writeBuffer = TRUE;
 		m.address = address;
 		m.bufferAddress = buffer;
 		m.size = size;
@@ -282,5 +306,34 @@ namespace kdt {
 		keyboardEvent(keyCode, KEY_MAKE);
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		keyboardEvent(keyCode, KEY_BREAK);
+	}
+
+	// pattern scan
+	uintptr_t patternScan(char* pattern, char* mask) {
+		uintptr_t start = baseAddress;
+		uintptr_t end = start + imageSize;
+
+		uintptr_t currentChunk = start;
+		const SIZE_T chunkSize = 4096;
+
+		while (currentChunk < end)
+		{
+			byte buffer[chunkSize];
+			readBuffer(currentChunk, buffer, chunkSize);
+
+			uintptr_t InternalAddress = compare((char*)&buffer, chunkSize, pattern, mask);
+
+			if (InternalAddress != 0)
+			{
+				uintptr_t offsetFromBuffer = InternalAddress - (uintptr_t)&buffer;
+				return currentChunk + offsetFromBuffer;
+			}
+			else
+			{
+				currentChunk = currentChunk + chunkSize;
+			}
+		}
+
+		return 0;
 	}
 }
