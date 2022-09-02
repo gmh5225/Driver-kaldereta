@@ -19,4 +19,5 @@ namespace mem {
 	NTSTATUS initKeyboard(PKEYBOARD_OBJECT keyboard_obj);
 	bool mouseEvent(MOUSE_OBJECT mouse_obj, long x, long y, USHORT button_flags);
 	bool keyboardEvent(KEYBOARD_OBJECT keyboard_obj, USHORT key_flags, USHORT button_flags);
+	ULONG getProcessId(UNICODE_STRING process_name);
 }

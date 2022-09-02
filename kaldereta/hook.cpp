@@ -60,7 +60,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	}
 
 	// getting base address and image size
-	if (pMem->reqBase != FALSE)
+	if (pMem->reqBaseAddress != FALSE)
 	{
 		ANSI_STRING AS;
 		UNICODE_STRING moduleName;
@@ -204,6 +204,22 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		mem::keyboardEvent(keyboard_obj, pMem->keyCode, pMem->buttonFlags);
 
 		DbgPrintEx(0, 0, "Kaldereta: [KeyboardEvent] MouseEvent KeyCode: %08X, Flags: %08X\n", pMem->keyCode, pMem->buttonFlags);
+	}
+
+	// get process id
+	if (pMem->reqProcessId != FALSE) {
+		ANSI_STRING AS;
+		UNICODE_STRING process_name;
+
+		RtlInitAnsiString(&AS, pMem->moduleName);
+		RtlAnsiStringToUnicodeString(&process_name, &AS, TRUE);
+
+		ULONG proc_id = mem::getProcessId(process_name);
+		pMem->pid = proc_id;
+
+		DbgPrintEx(0, 0, "Kaldereta: [ProcessID] - %08X\n", pMem->pid);
+
+		RtlFreeUnicodeString(&process_name);
 	}
 
 	return STATUS_SUCCESS;

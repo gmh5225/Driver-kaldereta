@@ -1,8 +1,6 @@
 #pragma once
 
 #include <string>
-#include <locale>
-#include <codecvt>
 #include <memory>
 #include <thread>
 #include <system_error>
@@ -23,7 +21,8 @@ typedef struct __KALDERETA_MEMORY
 	USHORT buttonFlags;
 	USHORT keyCode;
 
-	BOOLEAN reqBase;
+	BOOLEAN reqProcessId;
+	BOOLEAN reqBaseAddress;
 	BOOLEAN virtualProtect;
 	BOOLEAN allocateMemory;
 	BOOLEAN freeMemory;
@@ -76,6 +75,7 @@ namespace kdt {
 			return 0;
 		}
 
+		// simulate mouse events
 		bool mouseEvent(USHORT flags, long x = -1, long y = -1) {
 			KALDERETA_MEMORY m = { 0 };
 
@@ -91,6 +91,7 @@ namespace kdt {
 			return true;
 		}
 
+		// simulate keyboard events
 		bool keyboardEvent(USHORT keyCode, USHORT flags) {
 			KALDERETA_MEMORY m = { 0 };
 
@@ -104,31 +105,17 @@ namespace kdt {
 		}
 	}
 
-	// get process id of a program
-	static std::uint32_t getProcID(const std::string processName)
-	{
-		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-		std::wstring procName = converter.from_bytes(processName);
+	// get process id
+	static ULONG getProcessId(const char* process_name) {
+		KALDERETA_MEMORY m = { 0 };
 
-		PROCESSENTRY32 pe32{ 0 };
-		const unique_handle snapshotHandle(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
+		m.pid = procID;
+		m.reqProcessId = TRUE;
+		m.moduleName = process_name;
 
-		if (snapshotHandle.get() == INVALID_HANDLE_VALUE)
-			return 0;
+		callHook(&m);
 
-		pe32.dwSize = sizeof(pe32);
-
-		if (Process32First(snapshotHandle.get(), &pe32)) {
-			while (Process32Next(snapshotHandle.get(), &pe32) == TRUE) {
-				if (procName.compare(pe32.szExeFile) == 0)
-				{
-					printf("[+] Process ID: %d\n", pe32.th32ProcessID);
-					return pe32.th32ProcessID;
-				}
-			}
-		}
-
-		return 0;
+		return m.pid;
 	}
 
 	// get base address of an image
@@ -137,7 +124,7 @@ namespace kdt {
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
-		m.reqBase = TRUE;
+		m.reqBaseAddress = TRUE;
 		m.moduleName = moduleName;
 
 		callHook(&m);

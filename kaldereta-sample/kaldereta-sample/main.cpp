@@ -7,7 +7,7 @@ int main() {
 
 	std::string PROCESS_NAME = "test-app-x64.exe";
 
-	kdt::procID = kdt::getProcID(PROCESS_NAME);
+	kdt::procID = kdt::getProcessId(PROCESS_NAME.c_str());
 
 	printf("[-] Waiting for %s\n", PROCESS_NAME.c_str());
 
@@ -17,8 +17,9 @@ int main() {
 
 	kdt::baseAddress = kdt::getBaseAddress(PROCESS_NAME.c_str());
 	
-	printf("[+] Base Address: %012X\n", kdt::baseAddress);
-	printf("[+] Image Size: %012X\n", kdt::imageSize);
+	printf("[-] Process ID: %d\n", kdt::procID);
+	printf("[-] Base Address: %012X\n", kdt::baseAddress);
+	printf("[-] Image Size: %012X\n", kdt::imageSize);
 	
 	/*kdt::virtualProtect(0xA38F5E6C0, PAGE_READWRITE, 0x40);*/
 
