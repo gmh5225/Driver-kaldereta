@@ -82,7 +82,9 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	if (pMem->virtualProtect != FALSE)
 	{
 		if (NT_SUCCESS(mem::protectMemory(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->protection, pMem->oldProtection)))
-			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Succefully Changed Protection at %08X\n", pMem->address);
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Succefully Changed Protection at %012X\n", pMem->address);
+		else
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Failed Changing Page Protection\n");
 	}
 
 	// allocate memory
@@ -90,9 +92,9 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	{
 		PVOID address;
 		if (NT_SUCCESS(mem::allocateMemory(pMem->pid, pMem->size, pMem->protection, address)))
-			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Allocated Memory at %08X\n", address);
+			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Allocated Memory at %012X\n", address);
 		else
-			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Failed Allocation Memory\n");
+			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Failed Allocating Memory\n");
 
 		pMem->address = (UINT_PTR)address;
 	}
@@ -102,7 +104,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	{
 		SIZE_T size;
 		if (NT_SUCCESS(mem::freeMemory(pMem->pid, (PVOID)pMem->address, size)))
-			DbgPrintEx(0, 0, "Kaldereta: [FreeMemory] Freed %08X at %08X\n", size, pMem->address);
+			DbgPrintEx(0, 0, "Kaldereta: [FreeMemory] Freed %012X at %012X\n", size, pMem->address);
 
 		pMem->size = size;
 	}
@@ -122,7 +124,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		PsLookupProcessByProcessId((HANDLE)pMem->pid, &Process);
 		mem::writeMemory((HANDLE)pMem->pid, pMem->address, kernelBuff, pMem->size);
 
-		DbgPrintEx(0, 0, "Kaldereta: [WriteMemory] Wrote Memory at %08X\n", pMem->address);
+		DbgPrintEx(0, 0, "Kaldereta: [WriteMemory] Wrote Memory at %012X\n", pMem->address);
 
 		ExFreePool(kernelBuff);
 	}
@@ -144,7 +146,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 
 		mem::writeMemory((HANDLE)pMem->pid, pMem->address, kernelBuffer, pMem->size);
 
-		DbgPrintEx(0, 0, "Kaldereta: [WriteMemoryString] Wrote Memory String at %08X\n", pMem->address);
+		DbgPrintEx(0, 0, "Kaldereta: [WriteMemoryString] Wrote Memory String at %012X\n", pMem->address);
 
 		ExFreePool(kernelBuffer);
 	}
@@ -155,7 +157,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		void* ReadOutput = NULL;
 		mem::readMemory((HANDLE)pMem->pid, pMem->address, &ReadOutput, pMem->size);
 
-		DbgPrintEx(0, 0, "Kaldereta: [ReadMemory] Read Memory at %08X\n", pMem->address);
+		DbgPrintEx(0, 0, "Kaldereta: [ReadMemory] Read Memory at %012X\n", pMem->address);
 
 		pMem->output = ReadOutput;
 	}
@@ -174,7 +176,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 
 		mem::readMemory((HANDLE)pMem->pid, pMem->address, kernelBuffer, pMem->size);
 
-		DbgPrintEx(0, 0, "Kaldereta: [ReadMemoryString] Read Memory String at %08X\n", pMem->address);
+		DbgPrintEx(0, 0, "Kaldereta: [ReadMemoryString] Read Memory String at %012X\n", pMem->address);
 
 		RtlZeroMemory(pMem->bufferAddress, pMem->size);
 
@@ -188,7 +190,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	if (pMem->mouseEvent != FALSE) {
 		mem::mouseEvent(mouse_obj, pMem->x, pMem->y, pMem->buttonFlags);
 
-		DbgPrintEx(0, 0, "Kaldereta: [MouseEvent] MouseEvent at x: %d y: %d\n", pMem->x, pMem->y);
+		DbgPrintEx(0, 0, "Kaldereta: [MouseEvent] MouseEvent Flags: %08X\n", pMem->buttonFlags);
 	}
 
 	return STATUS_SUCCESS;

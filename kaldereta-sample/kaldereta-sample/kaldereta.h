@@ -4,8 +4,10 @@
 #include <locale>
 #include <codecvt>
 #include <memory>
+#include <thread>
 #include <system_error>
 #include <TlHelp32.h>
+#include "kalderata_defs.h"
 
 typedef struct __KALDERETA_MEMORY
 {
@@ -53,17 +55,6 @@ namespace kdt {
 	static ULONGLONG imageSize;
 	static std::uintptr_t baseAddress;
 	
-	// private functions
-	namespace {
-		int iSizeOfArray(int* iArray)
-		{
-			for (int iLength = 1; iLength < MAX_PATH; iLength++)
-				if (iArray[iLength] == '*')
-					return iLength;
-			return 0;
-		}
-	}
-	
 	// hook win function to communicate with driver
 	template<typename ... A>
 	uint64_t callHook(const A ... args)
@@ -72,6 +63,28 @@ namespace kdt {
 		void* controlFunction = (void*)GetProcAddress(LoadLibrary(L"win32u.dll"), "NtTokenManagerGetAnalogExclusiveTokenEvent");
 		const auto control = static_cast<uint64_t(__stdcall*)(A...)>(controlFunction);
 		return control(args ...);
+	}
+
+	namespace {
+		int iSizeOfArray(int* iArray)
+		{
+			for (int iLength = 1; iLength < MAX_PATH; iLength++)
+				if (iArray[iLength] == '*')
+					return iLength;
+			return 0;
+		}
+
+		bool simulateMouseEvent(USHORT flags) {
+			KALDERETA_MEMORY m = { 0 };
+
+			m.pid = procID;
+			m.mouseEvent = TRUE;
+			m.buttonFlags = flags;
+
+			callHook(&m);
+
+			return true;
+		}
 	}
 
 	// get process id of a program
@@ -147,7 +160,7 @@ namespace kdt {
 	}
 
 	// free memory
-	static void freeMemory(UINT_PTR address)
+	static bool freeMemory(UINT_PTR address)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
@@ -155,6 +168,8 @@ namespace kdt {
 		m.freeMemory = TRUE;
 
 		callHook(&m);
+
+		return true;
 	}
 
 	// read from address
@@ -209,13 +224,13 @@ namespace kdt {
 
 	// write to address with offset
 	template <class T>
-	void write(DWORD dwAddress, char* Offset, T Value)
+	bool write(DWORD dwAddress, char* Offset, T Value)
 	{
-		write<T>(read<T>(dwAddress, Offset, false), Value);
+		return write<T>(read<T>(dwAddress, Offset, false), Value);
 	}
 
 	// read string from address
-	static void readString(UINT_PTR address, void* buffer, SIZE_T size)
+	static bool readString(UINT_PTR address, void* buffer, SIZE_T size)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
@@ -226,10 +241,12 @@ namespace kdt {
 		m.size = size;
 
 		callHook(&m);
+		
+		return true;
 	}
 
 	// write string to address
-	static void writeString(UINT_PTR address, void* buffer, SIZE_T size)
+	static bool writeString(UINT_PTR address, void* buffer, SIZE_T size)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
@@ -240,5 +257,14 @@ namespace kdt {
 		m.size = size;
 
 		callHook(&m);
+
+		return true;
+	}
+
+	// mouse events
+	static void click() {
+		simulateMouseEvent(MOUSE_LEFT_BUTTON_DOWN);
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		simulateMouseEvent(MOUSE_LEFT_BUTTON_UP);
 	}
 }

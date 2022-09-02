@@ -20,6 +20,20 @@ int main() {
 	printf("[+] Base Address: %012X\n", kdt::baseAddress);
 	printf("[+] Image Size: %012X\n", kdt::imageSize);
 	
+	/*kdt::virtualProtect(0xA38F5E6C0, PAGE_READWRITE, 0x40);*/
+
+	/*kdt::allocateMemory(0x50, PAGE_READWRITE);*/
+
+	/*char buffer[MAX_PATH];
+	kdt::readString(0xA38F5E6C0, buffer, MAX_PATH);
+	std::cout << buffer << std::endl;*/
+
+	/*char newBuffer[11];
+	sprintf(newBuffer, "New String");
+	kdt::writeString(0xA38F5E6C0, newBuffer, 11);*/
+
+	//kdt::click();
+
 	for (;;);
 
 	return 0;
