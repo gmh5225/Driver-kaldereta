@@ -22,7 +22,8 @@ int main() {
 	printf("[-] Image Size: %012X\n", kdt::imageSize);
 	
 	/*uint32_t old_protection;
-	kdt::virtualProtect(0xA38F5E6C0, PAGE_READWRITE, 0x40, old_protection);*/
+	kdt::virtualProtect(0x4E36CFE020, PAGE_READWRITE, 0x40, old_protection);
+	std::cout << old_protection << std::endl;*/
 
 	/*kdt::virtualAlloc(0xA38F5E6C0, 0x100, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);*/
 

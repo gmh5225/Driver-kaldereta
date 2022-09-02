@@ -194,7 +194,7 @@ NTSTATUS mem::virtualProtect(ULONG64 pid, PVOID address, ULONG size, ULONG prote
 
 NTSTATUS mem::virtualAlloc(ULONG64 pid, PVOID address, SIZE_T size, ULONG allocation_type, ULONG protection)
 {
-	if (!pid || !size || !allocation_type  || !protection) {
+	if (!pid || !size || !allocation_type || !protection) {
 		return STATUS_INVALID_PARAMETER;
 	}
 

@@ -49,12 +49,10 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	KALDERETA_MEMORY* pMem = (KALDERETA_MEMORY*)calledParam;
 	
 	if (!mouse_obj.service_callback || !mouse_obj.mouse_device) {
-		DbgPrintEx(0, 0, "Kaldereta: [Mouse] Initializing Mouse Service\n");
 		mem::initMouse(&mouse_obj);
 	}
 
 	if (!keyboard_obj.service_callback || !keyboard_obj.keyboard_device) {
-		DbgPrintEx(0, 0, "Kaldereta: [Keyboard] Initializing Keyboard Service\n");
 		mem::initKeyboard(&keyboard_obj);
 	}
 
@@ -103,11 +101,13 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	if (pMem->virtualProtect != FALSE)
 	{
 		ULONG old_protection;
-		if (NT_SUCCESS(mem::virtualProtect(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->protection, old_protection))) {
+		NTSTATUS status = mem::virtualProtect(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->protection, old_protection);
+
+		if (NT_SUCCESS(status)) {
 			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Changed Protection at %012X\n", pMem->address);
 		}
 		else {
-			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Failed Changing Page Protection\n");
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Failed Changing Page Protection, Code: %08X\n", status);
 		}
 
 		pMem->oldProtection = old_protection;
@@ -116,22 +116,26 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	// allocate memory
 	if (pMem->virtualAlloc != FALSE)
 	{
-		if (NT_SUCCESS(mem::virtualAlloc(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->allocationType, pMem->protection))) {
+		NTSTATUS status = mem::virtualAlloc(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->allocationType, pMem->protection);
+
+		if (NT_SUCCESS(status)) {
 			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Allocated Memory at %012X\n", pMem->address);
 		}
 		else {
-			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Failed Allocating Memory\n");
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Failed Allocating Memory, Code: %08X\n", status);
 		}
 	}
 
 	// free memory
 	if (pMem->virtualFree != FALSE)
 	{
-		if (NT_SUCCESS(mem::virtualFree(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->freeType))) {
+		NTSTATUS status = mem::virtualFree(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->freeType);
+
+		if (NT_SUCCESS(status)) {
 			DbgPrintEx(0, 0, "Kaldereta: [VirtualFree] Freed %08X at %012X\n", pMem->size, pMem->address);
 		}
 		else {
-			DbgPrintEx(0, 0, "Kaldereta: [VirtualFree] Failed Freeing Memory\n");
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualFree] Failed Freeing Memory, Code: %08X\n", status);
 		}
 	}
 
