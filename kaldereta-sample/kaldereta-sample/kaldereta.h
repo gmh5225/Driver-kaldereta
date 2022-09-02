@@ -18,8 +18,8 @@ typedef struct __KALDERETA_MEMORY
 	ULONG64 baseAddress;
 	ULONGLONG imageSize;
 	ULONGLONG size;
-	ULONG x;
-	ULONG y;
+	long x;
+	long y;
 	USHORT buttonFlags;
 
 	BOOLEAN reqBase;
@@ -74,10 +74,14 @@ namespace kdt {
 			return 0;
 		}
 
-		bool simulateMouseEvent(USHORT flags) {
+		bool simulateMouseEvent(USHORT flags, long x = -1, long y = -1) {
 			KALDERETA_MEMORY m = { 0 };
 
 			m.pid = procID;
+			if (x != -1 && y != -1) {
+				m.x = x;
+				m.y = y;
+			}
 			m.mouseEvent = TRUE;
 			m.buttonFlags = flags;
 
@@ -261,10 +265,15 @@ namespace kdt {
 		return true;
 	}
 
-	// mouse events
+	// simulate mouse click
 	static void click() {
 		simulateMouseEvent(MOUSE_LEFT_BUTTON_DOWN);
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		simulateMouseEvent(MOUSE_LEFT_BUTTON_UP);
+	}
+
+	// simulate mouse movement
+	static void moveTo(long x, long y) {
+		simulateMouseEvent(MOUSE_MOVE_ABSOLUTE | MOUSE_VIRTUAL_DESKTOP, x, y);
 	}
 }

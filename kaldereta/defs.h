@@ -17,8 +17,8 @@ typedef struct __KALDERETA_MEMORY
 	ULONG64 baseAddress;
 	ULONGLONG imageSize;
 	ULONGLONG size;
-	ULONG x;
-	ULONG y;
+	long x;
+	long y;
 	USHORT buttonFlags;
 
 	BOOLEAN reqBase;

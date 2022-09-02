@@ -34,6 +34,8 @@ int main() {
 
 	//kdt::click();
 
+	kdt::moveTo(500, 500);
+
 	for (;;);
 
 	return 0;
