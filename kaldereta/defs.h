@@ -4,6 +4,7 @@
 #include <windef.h>
 #include <ntstrsafe.h>
 #include <ntddmou.h>
+#include <ntddkbd.h>
 #include <wdm.h>
 
 #pragma comment(lib, "ntoskrnl.lib")
@@ -20,6 +21,7 @@ typedef struct __KALDERETA_MEMORY
 	long x;
 	long y;
 	USHORT buttonFlags;
+	USHORT keyCode;
 
 	BOOLEAN reqBase;
 	BOOLEAN virtualProtect;
@@ -30,6 +32,7 @@ typedef struct __KALDERETA_MEMORY
 	BOOLEAN read;
 	BOOLEAN readString;
 	BOOLEAN mouseEvent;
+	BOOLEAN keyboardEvent;
 
 	const char* moduleName;
 
@@ -302,11 +305,25 @@ typedef VOID
 	PULONG InputDataConsumed
 );
 
+typedef VOID
+(*KeyboardClassServiceCallback)(
+	PDEVICE_OBJECT DeviceObject,
+	PKEYBOARD_INPUT_DATA InputDataStart,
+	PKEYBOARD_INPUT_DATA InputDataEnd,
+	PULONG InputDataConsumed
+);
+
 typedef struct _MOUSE_OBJECT
 {
 	PDEVICE_OBJECT mouse_device;
 	MouseClassServiceCallback service_callback;
 } MOUSE_OBJECT, * PMOUSE_OBJECT;
+
+typedef struct _KEYBOARD_OBJECT
+{
+	PDEVICE_OBJECT keyboard_device;
+	KeyboardClassServiceCallback service_callback;
+} KEYBOARD_OBJECT, * PKEYBOARD_OBJECT;
 
 extern "C"
 NTSYSAPI

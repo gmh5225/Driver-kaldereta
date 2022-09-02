@@ -34,7 +34,9 @@ int main() {
 
 	//kdt::click();
 
-	kdt::moveTo(500, 500);
+	//kdt::keyPress(0x41);
+
+	//kdt::moveTo(500, 500);
 
 	for (;;);
 

@@ -1,6 +1,7 @@
 #include "hook.h"
 
 MOUSE_OBJECT mouse_obj = { 0 };
+KEYBOARD_OBJECT keyboard_obj = { 0 };
 
 bool hook::callKernelFunc(void* kernelFunctionAddress)
 {
@@ -49,8 +50,13 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	KALDERETA_MEMORY* pMem = (KALDERETA_MEMORY*)calledParam;
 	
 	if (!mouse_obj.service_callback || !mouse_obj.mouse_device) {
-		DbgPrintEx(0, 0, "Kaldereta: [MouseEvent] Initializing Mouse Service\n");
+		DbgPrintEx(0, 0, "Kaldereta: [Mouse] Initializing Mouse Service\n");
 		mem::initMouse(&mouse_obj);
+	}
+
+	if (!keyboard_obj.service_callback || !keyboard_obj.keyboard_device) {
+		DbgPrintEx(0, 0, "Kaldereta: [Keyboard] Initializing Keyboard Service\n");
+		mem::initKeyboard(&keyboard_obj);
 	}
 
 	// getting base address and image size
@@ -191,6 +197,13 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		mem::mouseEvent(mouse_obj, pMem->x, pMem->y, pMem->buttonFlags);
 
 		DbgPrintEx(0, 0, "Kaldereta: [MouseEvent] MouseEvent Flags: %08X\n", pMem->buttonFlags);
+	}
+
+	// keyboard event
+	if (pMem->keyboardEvent != FALSE) {
+		mem::keyboardEvent(keyboard_obj, pMem->keyCode, pMem->buttonFlags);
+
+		DbgPrintEx(0, 0, "Kaldereta: [KeyboardEvent] MouseEvent KeyCode: %08X, Flags: %08X\n", pMem->keyCode, pMem->buttonFlags);
 	}
 
 	return STATUS_SUCCESS;

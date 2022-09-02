@@ -21,6 +21,7 @@ typedef struct __KALDERETA_MEMORY
 	long x;
 	long y;
 	USHORT buttonFlags;
+	USHORT keyCode;
 
 	BOOLEAN reqBase;
 	BOOLEAN virtualProtect;
@@ -31,6 +32,7 @@ typedef struct __KALDERETA_MEMORY
 	BOOLEAN read;
 	BOOLEAN readString;
 	BOOLEAN mouseEvent;
+	BOOLEAN keyboardEvent;
 
 	const char* moduleName;
 
@@ -74,15 +76,26 @@ namespace kdt {
 			return 0;
 		}
 
-		bool simulateMouseEvent(USHORT flags, long x = -1, long y = -1) {
+		bool mouseEvent(USHORT flags, long x = -1, long y = -1) {
 			KALDERETA_MEMORY m = { 0 };
 
-			m.pid = procID;
+			m.mouseEvent = TRUE;
 			if (x != -1 && y != -1) {
 				m.x = x;
 				m.y = y;
 			}
-			m.mouseEvent = TRUE;
+			m.buttonFlags = flags;
+
+			callHook(&m);
+
+			return true;
+		}
+
+		bool keyboardEvent(USHORT keyCode, USHORT flags) {
+			KALDERETA_MEMORY m = { 0 };
+
+			m.keyboardEvent = TRUE;
+			m.keyCode = (USHORT)MapVirtualKey(keyCode, 0);
 			m.buttonFlags = flags;
 
 			callHook(&m);
@@ -267,13 +280,20 @@ namespace kdt {
 
 	// simulate mouse click
 	static void click() {
-		simulateMouseEvent(MOUSE_LEFT_BUTTON_DOWN);
+		mouseEvent(MOUSE_LEFT_BUTTON_DOWN);
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		simulateMouseEvent(MOUSE_LEFT_BUTTON_UP);
+		mouseEvent(MOUSE_LEFT_BUTTON_UP);
 	}
 
 	// simulate mouse movement
 	static void moveTo(long x, long y) {
-		simulateMouseEvent(MOUSE_MOVE_ABSOLUTE | MOUSE_VIRTUAL_DESKTOP, x, y);
+		mouseEvent(MOUSE_MOVE_ABSOLUTE | MOUSE_VIRTUAL_DESKTOP, x, y);
+	}
+
+	// simulate key press
+	static void keyPress(USHORT keyCode) {
+		keyboardEvent(keyCode, KEY_MAKE);
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		keyboardEvent(keyCode, KEY_BREAK);
 	}
 }
