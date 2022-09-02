@@ -270,7 +270,7 @@ NTSTATUS mem::initMouse(PMOUSE_OBJECT mouse_obj)
 	PDRIVER_OBJECT class_driver_object = NULL;
 	NTSTATUS status = ObReferenceObjectByName(&class_string, OBJ_CASE_INSENSITIVE, NULL, 0, *IoDriverObjectType, KernelMode, NULL, (PVOID*)&class_driver_object);
 	if (!NT_SUCCESS(status)) {
-		DbgPrintEx(0, 0, "Kaldereta: [Mouse] Failed Initializing Mouse 0x1\n");
+		DbgPrintEx(0, 0, "Kaldereta: [Mouse] Failed Initializing Mouse 0x1, Code: %08X\n", status);
 		return status; 
 	}
 
@@ -281,7 +281,7 @@ NTSTATUS mem::initMouse(PMOUSE_OBJECT mouse_obj)
 	status = ObReferenceObjectByName(&hid_string, OBJ_CASE_INSENSITIVE, NULL, 0, *IoDriverObjectType, KernelMode, NULL, (PVOID*)&hid_driver_object);
 	if (!NT_SUCCESS(status))
 	{
-		DbgPrintEx(0, 0, "Kaldereta: [Mouse] Failed Initializing Mouse 0x2\n");
+		DbgPrintEx(0, 0, "Kaldereta: [Mouse] Failed Initializing Mouse 0x2, Code: %08X\n", status);
 		if (class_driver_object) { ObDereferenceObject(class_driver_object); }
 		return status;
 	}
@@ -361,7 +361,7 @@ NTSTATUS mem::initKeyboard(PKEYBOARD_OBJECT keyboard_obj)
 	PDRIVER_OBJECT class_driver_object = NULL;
 	NTSTATUS status = ObReferenceObjectByName(&class_string, OBJ_CASE_INSENSITIVE, NULL, 0, *IoDriverObjectType, KernelMode, NULL, (PVOID*)&class_driver_object);
 	if (!NT_SUCCESS(status)) {
-		DbgPrintEx(0, 0, "Kaldereta: [Keyboard] Failed Initializing Keyboard 0x1\n");
+		DbgPrintEx(0, 0, "Kaldereta: [Keyboard] Failed Initializing Keyboard 0x1, Code: %08X\n", status);
 		return status;
 	}
 
@@ -372,7 +372,7 @@ NTSTATUS mem::initKeyboard(PKEYBOARD_OBJECT keyboard_obj)
 	status = ObReferenceObjectByName(&hid_string, OBJ_CASE_INSENSITIVE, NULL, 0, *IoDriverObjectType, KernelMode, NULL, (PVOID*)&hid_driver_object);
 	if (!NT_SUCCESS(status))
 	{
-		DbgPrintEx(0, 0, "Kaldereta: [Keyboard] Failed Initializing Keyboard 0x2\n");
+		DbgPrintEx(0, 0, "Kaldereta: [Keyboard] Failed Initializing Keyboard 0x2, Code: %08X\n", status);
 		if (class_driver_object) { ObDereferenceObject(class_driver_object); }
 		return status;
 	}
