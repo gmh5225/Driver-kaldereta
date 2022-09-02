@@ -10,6 +10,8 @@ bool hook::callKernelFunc(void* kernelFunctionAddress)
 		return false;
 	}
 
+	uintptr_t hookAddress = reinterpret_cast<uintptr_t>(kernelFunctionAddress);
+
 	PVOID* function = reinterpret_cast<PVOID*>(mem::getModuleExport("\\SystemRoot\\System32\\drivers\\dxgkrnl.sys", "NtTokenManagerGetAnalogExclusiveTokenEvent"));
 
 	if (!function)
@@ -34,13 +36,10 @@ bool hook::callKernelFunc(void* kernelFunctionAddress)
 	RtlSecureZeroMemory(&orig, sizeof(orig));
 
 	memcpy((PVOID)((ULONG_PTR)orig), shellCodeStart, sizeof(shellCodeStart));
-
-	uintptr_t hookAddress = reinterpret_cast<uintptr_t>(kernelFunctionAddress);
-
 	memcpy((PVOID)((ULONG_PTR)orig + sizeof(shellCodeStart)), &hookAddress, sizeof(void*));
 	memcpy((PVOID)((ULONG_PTR)orig + sizeof(shellCodeStart) + sizeof(void*)), &shellCodeEnd, sizeof(shellCodeEnd));
 
-	mem::WPM2(function, &orig, sizeof(orig));
+	mem::writeToReadOnly(function, &orig, sizeof(orig));
 
 	return true;
 }
@@ -103,32 +102,37 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	// changing memory protection
 	if (pMem->virtualProtect != FALSE)
 	{
-		if (NT_SUCCESS(mem::protectMemory(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->protection, pMem->oldProtection)))
-			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Succefully Changed Protection at %012X\n", pMem->address);
-		else
+		ULONG old_protection;
+		if (NT_SUCCESS(mem::virtualProtect(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->protection, old_protection))) {
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Changed Protection at %012X\n", pMem->address);
+		}
+		else {
 			DbgPrintEx(0, 0, "Kaldereta: [VirtualProtect] Failed Changing Page Protection\n");
+		}
+
+		pMem->oldProtection = old_protection;
 	}
 
 	// allocate memory
-	if (pMem->allocateMemory != FALSE)
+	if (pMem->virtualAlloc != FALSE)
 	{
-		PVOID address;
-		if (NT_SUCCESS(mem::allocateMemory(pMem->pid, pMem->size, pMem->protection, address)))
-			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Allocated Memory at %012X\n", address);
-		else
-			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Failed Allocating Memory\n");
-
-		pMem->address = (UINT_PTR)address;
+		if (NT_SUCCESS(mem::virtualAlloc(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->allocationType, pMem->protection))) {
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Allocated Memory at %012X\n", pMem->address);
+		}
+		else {
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Failed Allocating Memory\n");
+		}
 	}
 
 	// free memory
-	if (pMem->freeMemory != FALSE)
+	if (pMem->virtualFree != FALSE)
 	{
-		SIZE_T size;
-		if (NT_SUCCESS(mem::freeMemory(pMem->pid, (PVOID)pMem->address, size)))
-			DbgPrintEx(0, 0, "Kaldereta: [FreeMemory] Freed %012X at %012X\n", size, pMem->address);
-
-		pMem->size = size;
+		if (NT_SUCCESS(mem::virtualFree(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->freeType))) {
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualFree] Freed %08X at %012X\n", pMem->size, pMem->address);
+		}
+		else {
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualFree] Failed Freeing Memory\n");
+		}
 	}
 
 	// write to memory

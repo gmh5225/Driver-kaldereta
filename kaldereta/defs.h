@@ -13,6 +13,8 @@ typedef struct __KALDERETA_MEMORY
 {
 	ULONG pid;
 	ULONG protection;
+	ULONG allocationType;
+	ULONG freeType;
 	ULONG oldProtection;
 	UINT_PTR address;
 	ULONG64 baseAddress;
@@ -26,8 +28,8 @@ typedef struct __KALDERETA_MEMORY
 	BOOLEAN reqProcessId;
 	BOOLEAN reqBaseAddress;
 	BOOLEAN virtualProtect;
-	BOOLEAN allocateMemory;
-	BOOLEAN freeMemory;
+	BOOLEAN virtualAlloc;
+	BOOLEAN virtualFree;
 	BOOLEAN write;
 	BOOLEAN writeBuffer;
 	BOOLEAN read;

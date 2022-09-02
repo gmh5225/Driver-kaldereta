@@ -12,6 +12,8 @@ typedef struct __KALDERETA_MEMORY
 {
 	ULONG pid;
 	ULONG protection;
+	ULONG allocationType;
+	ULONG freeType;
 	ULONG oldProtection;
 	UINT_PTR address;
 	ULONG64 baseAddress;
@@ -25,8 +27,8 @@ typedef struct __KALDERETA_MEMORY
 	BOOLEAN reqProcessId;
 	BOOLEAN reqBaseAddress;
 	BOOLEAN virtualProtect;
-	BOOLEAN allocateMemory;
-	BOOLEAN freeMemory;
+	BOOLEAN virtualAlloc;
+	BOOLEAN virtualFree;
 	BOOLEAN write;
 	BOOLEAN writeBuffer;
 	BOOLEAN read;
@@ -40,22 +42,11 @@ typedef struct __KALDERETA_MEMORY
 	void* bufferAddress;
 }KALDERETA_MEMORY;
 
-struct HandleDisposer
-{
-	using pointer = HANDLE;
-	void operator()(HANDLE handle) const {
-		if (handle != NULL || handle != INVALID_HANDLE_VALUE) {
-			CloseHandle(handle);
-		}
-	}
-};
-
-using unique_handle = std::unique_ptr<HANDLE, HandleDisposer>;
-
 namespace kdt {
 	static std::uint32_t procID;
 	static ULONGLONG imageSize;
 	static std::uintptr_t baseAddress;
+	static HWND windowHandle;
 	
 	// hook win function to communicate with driver
 	template<typename ... A>
@@ -160,28 +151,34 @@ namespace kdt {
 	}
 
 	// change protection of a memory region
-	static ULONG64 virtualProtect(uint64_t address, uint32_t pageProtection, std::size_t size)
+	static bool virtualProtect(uint64_t address, uint32_t protection, std::size_t size, uint32_t &old_protection)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
 		m.address = address;
-		m.protection = pageProtection;
+		m.protection = protection;
 		m.size = size;
 		m.virtualProtect = TRUE;
 
-		return callHook(&m);
+		callHook(&m);
+
+		old_protection = m.oldProtection;
+
+		return true;
 	}
 
 	// allocate memory region
-	static ULONG64 allocateMemory(std::size_t size, uint32_t protection)
+	static ULONG64 virtualAlloc(uint64_t address, std::size_t size, uint32_t allocation_type, uint32_t protection)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
-		m.protection = protection;
+		m.address = address;
 		m.size = size;
-		m.allocateMemory = TRUE;
+		m.allocationType = allocation_type;
+		m.protection = protection;
+		m.virtualAlloc = TRUE;
 
 		callHook(&m);
 
@@ -189,12 +186,15 @@ namespace kdt {
 	}
 
 	// free memory
-	static bool freeMemory(UINT_PTR address)
+	static bool virtualFree(UINT_PTR address, std::size_t size, uint32_t free_type)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
-		m.freeMemory = TRUE;
+		m.address = address;
+		m.size = size;
+		m.freeType = free_type;
+		m.virtualFree = TRUE;
 
 		callHook(&m);
 
@@ -336,5 +336,21 @@ namespace kdt {
 		}
 
 		return 0;
+	}
+
+	// get window handle
+	HWND getHwnd(DWORD proc_id) {
+		HWND curHwnd = NULL;
+		do
+		{
+			curHwnd = FindWindowEx(NULL, curHwnd, NULL, NULL);
+			DWORD dwProcID = 0;
+			GetWindowThreadProcessId(curHwnd, &dwProcID);
+			if (dwProcID == proc_id) {
+				return curHwnd;
+			}
+		} while (curHwnd != NULL);
+
+		return NULL;
 	}
 }

@@ -47,23 +47,19 @@ PVOID mem::getModuleExport(const char* moduleName, LPCSTR routineName)
 	return RtlFindExportedRoutineByName(lpModule, routineName);
 }
 
-bool mem::WPM(void* address, void* buffer, size_t size)
-{
-	return (!RtlCopyMemory(address, buffer, size)) ? false : true;
-}
-
-bool mem::WPM2(void* address, void* buffer, size_t size)
+bool mem::writeToReadOnly(void* address, void* buffer, size_t size)
 {
 	PMDL mdl = IoAllocateMdl(address, size, FALSE, FALSE, NULL);
 
-	if (!mdl)
+	if (!mdl) {
 		return false;
+	}
 
 	MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
 	PVOID Mapping = MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmNonCached, NULL, FALSE, NormalPagePriority);
 	MmProtectMdlSystemAddress(mdl, PAGE_READWRITE);
 
-	WPM(Mapping, buffer, size);
+	RtlCopyMemory(Mapping, buffer, size);
 
 	MmUnmapLockedPages(Mapping, mdl);
 	MmUnlockPages(mdl);
@@ -167,30 +163,28 @@ bool mem::writeBuffer(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size)
 	return true;
 }
 
-NTSTATUS mem::protectMemory(ULONG64 pid, PVOID address, ULONG size, ULONG protection, ULONG& protection_out)
+NTSTATUS mem::virtualProtect(ULONG64 pid, PVOID address, ULONG size, ULONG protection, ULONG& protection_out)
 {
-	if (!pid || !address || !size || !protection)
+	if (!pid || !address || !size || !protection) {
 		return STATUS_INVALID_PARAMETER;
+	}
 
 	NTSTATUS status = STATUS_SUCCESS;
 	PEPROCESS process = nullptr;
 
-	if (NT_SUCCESS(PsLookupProcessByProcessId(reinterpret_cast<HANDLE>(pid), &process)))
-	{
-		//PVOID address = reinterpret_cast<PVOID>( memory_struct->address );
-		//ULONG size = (ULONG)( memory_struct->size );
-		//ULONG protection = memory_struct->protection;
-		ULONG protection_old = 0;
-
+	if (NT_SUCCESS(PsLookupProcessByProcessId(reinterpret_cast<HANDLE>(pid), &process))) {
+		ULONG old_protection = 0;
 		KAPC_STATE state;
+
 		KeStackAttachProcess(process, &state);
 
-		status = ZwProtectVirtualMemory(NtCurrentProcess(), &address, &size, protection, &protection_old);
+		status = ZwProtectVirtualMemory(NtCurrentProcess(), &address, &size, protection, &old_protection);
 
 		KeUnstackDetachProcess(&state);
 
-		if (NT_SUCCESS(status))
-			protection_out = protection_old;
+		if (NT_SUCCESS(status)) {
+			protection_out = old_protection;
+		}
 
 		ObDereferenceObject(process);
 	}
@@ -198,44 +192,35 @@ NTSTATUS mem::protectMemory(ULONG64 pid, PVOID address, ULONG size, ULONG protec
 	return status;
 }
 
-NTSTATUS mem::allocateMemory(ULONG64 pid, SIZE_T size, ULONG protection, PVOID& address_out)
+NTSTATUS mem::virtualAlloc(ULONG64 pid, PVOID address, SIZE_T size, ULONG allocation_type, ULONG protection)
 {
-	if (!pid || !size || !protection)
+	if (!pid || !size || !allocation_type  || !protection) {
 		return STATUS_INVALID_PARAMETER;
-
-	DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Starting\n");
+	}
 
 	NTSTATUS status = STATUS_SUCCESS;
 	PEPROCESS process = nullptr;
 
-	if (NT_SUCCESS(PsLookupProcessByProcessId(reinterpret_cast<HANDLE>(pid), &process)))
-	{
-		PVOID address = NULL;
+	if (NT_SUCCESS(PsLookupProcessByProcessId(reinterpret_cast<HANDLE>(pid), &process))) {
 		KAPC_STATE state;
 
 		KeStackAttachProcess(process, &state);
 
-		status = ZwAllocateVirtualMemory(NtCurrentProcess(), &address, 0, &size, MEM_COMMIT | MEM_RESERVE, protection);
+		status = ZwAllocateVirtualMemory(NtCurrentProcess(), &address, 0, &size, allocation_type, protection);
 
 		KeUnstackDetachProcess(&state);
 
-		if (NT_SUCCESS(status))
-			address_out = address;
-		else
-			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Failed Allocation Memory %08X\n", address);
-
 		ObDereferenceObject(process);
 	}
-	else
-		DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Cant Find ID\n");
 
 	return status;
 }
 
-NTSTATUS mem::freeMemory(ULONG64 pid, PVOID address, SIZE_T& size_out)
+NTSTATUS mem::virtualFree(ULONG64 pid, PVOID address, SIZE_T size, ULONG free_type)
 {
-	if (!pid)
+	if (!pid || !address || !size || !free_type) {
 		return STATUS_INVALID_PARAMETER;
+	}
 
 	NTSTATUS status = STATUS_SUCCESS;
 	PEPROCESS process = nullptr;
@@ -247,14 +232,9 @@ NTSTATUS mem::freeMemory(ULONG64 pid, PVOID address, SIZE_T& size_out)
 
 		KeStackAttachProcess(process, &state);
 
-		status = ZwFreeVirtualMemory(NtCurrentProcess(), &address, &size, MEM_RELEASE);
+		status = ZwFreeVirtualMemory(NtCurrentProcess(), &address, &size, free_type);
 
 		KeUnstackDetachProcess(&state);
-
-		if (NT_SUCCESS(status))
-			size_out = size;
-		else
-			DbgPrintEx(0, 0, "Kaldereta: [AllocateMemory] Failed freeing memory\n");
 
 		ObDereferenceObject(process);
 	}

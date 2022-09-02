@@ -21,9 +21,12 @@ int main() {
 	printf("[-] Base Address: %012X\n", kdt::baseAddress);
 	printf("[-] Image Size: %012X\n", kdt::imageSize);
 	
-	/*kdt::virtualProtect(0xA38F5E6C0, PAGE_READWRITE, 0x40);*/
+	/*uint32_t old_protection;
+	kdt::virtualProtect(0xA38F5E6C0, PAGE_READWRITE, 0x40, old_protection);*/
 
-	/*kdt::allocateMemory(0x50, PAGE_READWRITE);*/
+	/*kdt::virtualAlloc(0xA38F5E6C0, 0x100, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);*/
+
+	/*kdt::virtualFree(0xA38F5E6C0, 0x100, MEM_RELEASE);*/
 
 	/*char buffer[MAX_PATH];
 	kdt::readBuffer(0xA38F5E6C0, buffer, MAX_PATH);
