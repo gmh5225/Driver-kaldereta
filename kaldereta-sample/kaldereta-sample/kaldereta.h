@@ -8,40 +8,6 @@
 #include <TlHelp32.h>
 #include "kalderata_defs.h"
 
-typedef struct __KALDERETA_MEMORY
-{
-	ULONG pid;
-	ULONG protection;
-	ULONG allocationType;
-	ULONG freeType;
-	ULONG oldProtection;
-	UINT_PTR address;
-	ULONG64 baseAddress;
-	ULONGLONG imageSize;
-	ULONGLONG size;
-	long x;
-	long y;
-	USHORT buttonFlags;
-	USHORT keyCode;
-
-	BOOLEAN reqProcessId;
-	BOOLEAN reqBaseAddress;
-	BOOLEAN virtualProtect;
-	BOOLEAN virtualAlloc;
-	BOOLEAN virtualFree;
-	BOOLEAN write;
-	BOOLEAN writeBuffer;
-	BOOLEAN read;
-	BOOLEAN readBuffer;
-	BOOLEAN mouseEvent;
-	BOOLEAN keyboardEvent;
-
-	const char* moduleName;
-
-	void* output;
-	void* bufferAddress;
-}KALDERETA_MEMORY;
-
 namespace kdt {
 	static std::uint32_t procID;
 	static ULONGLONG imageSize;
