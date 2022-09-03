@@ -50,9 +50,11 @@ int main() {
 
 	//kdt::moveTo(500, 500);
 
-	/*if (!kdt::manualMap("C:\\Users\\steph\\Documents\\projects\\others\\ManualMap\\x64\\Release\\SampleDll.dll")) {
+	//x64 "C:\\Users\\steph\\Documents\\projects\\others\\ManualMap\\x64\\Release\\SampleDll.dll"
+
+	if (!kdt::manualMap("C:\\Users\\steph\\Documents\\projects\\others\\ManualMap\\x64\\Release\\SampleDll.dll")) {
 		printf("[-] Manual Map Failed");
-	}*/
+	}
 
 	for (;;);
 

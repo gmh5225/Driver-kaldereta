@@ -424,7 +424,7 @@ namespace kdt {
 
 		HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, kdt::procID);
 
-		UINT_PTR ExecutableImageTemp = NULL;
+		uint64_t ExecutableImageTemp = NULL;
 		kdt::virtualAlloc(ExecutableImageTemp, pNtHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 		PVOID ExecutableImage = (PVOID)ExecutableImageTemp;
 
@@ -438,7 +438,7 @@ namespace kdt {
 				(PVOID)((LPBYTE)FileBuffer + pSectHeader[i].PointerToRawData), pSectHeader[i].SizeOfRawData);
 		}
 
-		UINT_PTR LoaderMemoryTemp = NULL;
+		uint64_t LoaderMemoryTemp = NULL;
 		kdt::virtualAlloc(LoaderMemoryTemp, 4096, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 		PVOID LoaderMemory = (PVOID)LoaderMemoryTemp;
 
@@ -454,8 +454,8 @@ namespace kdt {
 
 		HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)((loaderdata*)LoaderMemory + 1), LoaderMemory, 0, NULL);
 
-		std::cout << "Address of Loader: " << std::hex << LoaderMemory << std::endl;
-		std::cout << "Address of Image: " << std::hex << ExecutableImage << std::endl;
+		printf("[-] Loader Address: %012X\n", LoaderMemory);
+		printf("[-] Image Address: %012X\n", ExecutableImage);
 
 		WaitForSingleObject(hThread, 30000);
 
