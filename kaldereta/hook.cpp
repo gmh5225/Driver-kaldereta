@@ -116,7 +116,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	// allocate memory
 	if (pMem->virtualAlloc != FALSE)
 	{
-		PVOID address = NULL;
+		PVOID address = (PVOID)pMem->address;
 		NTSTATUS status = mem::virtualAlloc(pMem->pid, address, pMem->size, pMem->allocationType, pMem->protection);
 
 		if (NT_SUCCESS(status)) {

@@ -192,7 +192,7 @@ NTSTATUS mem::virtualProtect(ULONG64 pid, PVOID address, ULONG size, ULONG prote
 	return status;
 }
 
-NTSTATUS mem::virtualAlloc(ULONG64 pid, PVOID& address_out, SIZE_T size, ULONG allocation_type, ULONG protection)
+NTSTATUS mem::virtualAlloc(ULONG64 pid, PVOID& address, SIZE_T size, ULONG allocation_type, ULONG protection)
 {
 	if (!pid || !size || !allocation_type || !protection) {
 		return STATUS_INVALID_PARAMETER;
@@ -206,7 +206,7 @@ NTSTATUS mem::virtualAlloc(ULONG64 pid, PVOID& address_out, SIZE_T size, ULONG a
 
 		KeStackAttachProcess(process, &state);
 
-		status = ZwAllocateVirtualMemory(NtCurrentProcess(), &address_out, 0, &size, allocation_type, protection);
+		status = ZwAllocateVirtualMemory(NtCurrentProcess(), &address, 0, &size, allocation_type, protection);
 
 		KeUnstackDetachProcess(&state);
 

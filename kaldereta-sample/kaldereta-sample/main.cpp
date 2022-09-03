@@ -25,11 +25,13 @@ int main() {
 	kdt::virtualProtect(0x4E36CFE020, PAGE_READWRITE, 0x40, old_protection);
 	std::cout << old_protection << std::endl;*/
 
-	/*uint64_t allocation_base;
+	// kdt::virtualAlloc
+	// Note: address parameter could be IN or OUT
+	/*uint64_t allocation_base = NULL;
 	kdt::virtualAlloc(allocation_base, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-	printf("[-] Allocation Base: %012X\n", allocation_base);
+	printf("[-] Allocation Base: %012X\n", allocation_base);*/
 
-	kdt::virtualFree(allocation_base, MEM_RELEASE);*/
+	/*kdt::virtualFree(allocation_base, MEM_RELEASE);*/
 
 	/*char buffer[MAX_PATH];
 	kdt::readBuffer(0xA38F5E6C0, buffer, MAX_PATH);
