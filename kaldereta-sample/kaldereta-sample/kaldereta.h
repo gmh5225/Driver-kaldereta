@@ -169,12 +169,11 @@ namespace kdt {
 	}
 
 	// allocate memory region
-	static ULONG64 virtualAlloc(uint64_t address, std::size_t size, uint32_t allocation_type, uint32_t protection)
+	static bool virtualAlloc(uint64_t& address_out, std::size_t size, uint32_t allocation_type, uint32_t protection)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
-		m.address = address;
 		m.size = size;
 		m.allocationType = allocation_type;
 		m.protection = protection;
@@ -182,17 +181,18 @@ namespace kdt {
 
 		callHook(&m);
 
-		return m.address;
+		address_out = m.address;
+
+		return true;
 	}
 
 	// free memory
-	static bool virtualFree(UINT_PTR address, std::size_t size, uint32_t free_type)
+	static bool virtualFree(UINT_PTR address, uint32_t free_type)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
 		m.address = address;
-		m.size = size;
 		m.freeType = free_type;
 		m.virtualFree = TRUE;
 

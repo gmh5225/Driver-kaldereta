@@ -116,27 +116,34 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 	// allocate memory
 	if (pMem->virtualAlloc != FALSE)
 	{
-		NTSTATUS status = mem::virtualAlloc(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->allocationType, pMem->protection);
+		PVOID address = NULL;
+		NTSTATUS status = mem::virtualAlloc(pMem->pid, address, pMem->size, pMem->allocationType, pMem->protection);
 
 		if (NT_SUCCESS(status)) {
-			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Allocated Memory at %012X\n", pMem->address);
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Allocated Memory at %012X\n", address);
 		}
 		else {
 			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Failed Allocating Memory, Code: %08X\n", status);
 		}
+
+		pMem->address = (UINT_PTR)address;
 	}
 
 	// free memory
 	if (pMem->virtualFree != FALSE)
 	{
-		NTSTATUS status = mem::virtualFree(pMem->pid, (PVOID)pMem->address, pMem->size, pMem->freeType);
+		SIZE_T size_out = 0;
+
+		NTSTATUS status = mem::virtualFree(pMem->pid, (PVOID)pMem->address, pMem->freeType, size_out);
 
 		if (NT_SUCCESS(status)) {
-			DbgPrintEx(0, 0, "Kaldereta: [VirtualFree] Freed %08X at %012X\n", pMem->size, pMem->address);
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualFree] Freed %08X at %012X\n", size_out, pMem->address);
 		}
 		else {
 			DbgPrintEx(0, 0, "Kaldereta: [VirtualFree] Failed Freeing Memory, Code: %08X\n", status);
 		}
+
+		pMem->size = size_out;
 	}
 
 	// write to memory

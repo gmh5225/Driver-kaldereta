@@ -12,8 +12,8 @@ namespace mem {
 	bool readBuffer(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size);
 	bool writeBuffer(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size);
 	NTSTATUS virtualProtect(ULONG64 pid, PVOID address, ULONG size, ULONG protection, ULONG& protection_out);
-	NTSTATUS virtualAlloc(ULONG64 pid, PVOID address, SIZE_T size, ULONG allocation_type, ULONG protection);
-	NTSTATUS virtualFree(ULONG64 pid, PVOID address, SIZE_T size, ULONG free_type);
+	NTSTATUS virtualAlloc(ULONG64 pid, PVOID& address, SIZE_T size, ULONG allocation_type, ULONG protection);
+	NTSTATUS virtualFree(ULONG64 pid, PVOID address, ULONG free_type, SIZE_T& size_out);
 	NTSTATUS initMouse(PMOUSE_OBJECT mouse_obj);
 	NTSTATUS initKeyboard(PKEYBOARD_OBJECT keyboard_obj);
 	bool mouseEvent(MOUSE_OBJECT mouse_obj, long x, long y, USHORT button_flags);

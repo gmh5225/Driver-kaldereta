@@ -192,7 +192,7 @@ NTSTATUS mem::virtualProtect(ULONG64 pid, PVOID address, ULONG size, ULONG prote
 	return status;
 }
 
-NTSTATUS mem::virtualAlloc(ULONG64 pid, PVOID address, SIZE_T size, ULONG allocation_type, ULONG protection)
+NTSTATUS mem::virtualAlloc(ULONG64 pid, PVOID& address_out, SIZE_T size, ULONG allocation_type, ULONG protection)
 {
 	if (!pid || !size || !allocation_type || !protection) {
 		return STATUS_INVALID_PARAMETER;
@@ -206,7 +206,7 @@ NTSTATUS mem::virtualAlloc(ULONG64 pid, PVOID address, SIZE_T size, ULONG alloca
 
 		KeStackAttachProcess(process, &state);
 
-		status = ZwAllocateVirtualMemory(NtCurrentProcess(), &address, 0, &size, allocation_type, protection);
+		status = ZwAllocateVirtualMemory(NtCurrentProcess(), &address_out, 0, &size, allocation_type, protection);
 
 		KeUnstackDetachProcess(&state);
 
@@ -216,23 +216,21 @@ NTSTATUS mem::virtualAlloc(ULONG64 pid, PVOID address, SIZE_T size, ULONG alloca
 	return status;
 }
 
-NTSTATUS mem::virtualFree(ULONG64 pid, PVOID address, SIZE_T size, ULONG free_type)
+NTSTATUS mem::virtualFree(ULONG64 pid, PVOID address, ULONG free_type, SIZE_T& size_out)
 {
-	if (!pid || !address || !size || !free_type) {
+	if (!pid || !address || !free_type) {
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	NTSTATUS status = STATUS_SUCCESS;
 	PEPROCESS process = nullptr;
 
-	if (NT_SUCCESS(PsLookupProcessByProcessId(reinterpret_cast<HANDLE>(pid), &process)))
-	{
-		SIZE_T size = 0;
+	if (NT_SUCCESS(PsLookupProcessByProcessId(reinterpret_cast<HANDLE>(pid), &process))) {
 		KAPC_STATE state;
 
 		KeStackAttachProcess(process, &state);
 
-		status = ZwFreeVirtualMemory(NtCurrentProcess(), &address, &size, free_type);
+		status = ZwFreeVirtualMemory(NtCurrentProcess(), &address, &size_out, free_type);
 
 		KeUnstackDetachProcess(&state);
 
