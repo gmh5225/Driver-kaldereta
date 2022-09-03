@@ -34,6 +34,20 @@ typedef struct __KALDERETA_MEMORY
 	void* bufferAddress;
 }KALDERETA_MEMORY;
 
+typedef HMODULE(__stdcall* pLoadLibraryA)(LPCSTR);
+typedef FARPROC(__stdcall* pGetProcAddress)(HMODULE, LPCSTR);
+typedef INT(__stdcall* dllmain)(HMODULE, DWORD, LPVOID);
+
+struct loaderdata
+{
+	LPVOID ImageBase;
+	PIMAGE_NT_HEADERS NtHeaders;
+	PIMAGE_BASE_RELOCATION BaseReloc;
+	PIMAGE_IMPORT_DESCRIPTOR ImportDirectory;
+	pLoadLibraryA fnLoadLibraryA;
+	pGetProcAddress fnGetProcAddress;
+};
+
 #define MOUSE_LEFT_BUTTON_DOWN   0x0001  // Left Button changed to down.
 #define MOUSE_LEFT_BUTTON_UP     0x0002  // Left Button changed to up.
 #define MOUSE_RIGHT_BUTTON_DOWN  0x0004  // Right Button changed to down.

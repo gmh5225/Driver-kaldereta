@@ -120,7 +120,7 @@ NTSTATUS hook::hookHandler(PVOID calledParam)
 		NTSTATUS status = mem::virtualAlloc(pMem->pid, address, pMem->size, pMem->allocationType, pMem->protection);
 
 		if (NT_SUCCESS(status)) {
-			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Allocated Memory at %012X\n", address);
+			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Allocated %08X Memory at %012X\n", pMem->size, address);
 		}
 		else {
 			DbgPrintEx(0, 0, "Kaldereta: [VirtualAlloc] Failed Allocating Memory, Code: %08X\n", status);

@@ -18,13 +18,42 @@ namespace kdt {
 	template<typename ... A>
 	uint64_t callHook(const A ... args)
 	{
-		LoadLibrary(L"user32.dll");
-		void* controlFunction = (void*)GetProcAddress(LoadLibrary(L"win32u.dll"), "NtTokenManagerGetAnalogExclusiveTokenEvent");
+		LoadLibrary("user32.dll");
+		void* controlFunction = (void*)GetProcAddress(LoadLibrary("win32u.dll"), "NtTokenManagerGetAnalogExclusiveTokenEvent");
 		const auto control = static_cast<uint64_t(__stdcall*)(A...)>(controlFunction);
 		return control(args ...);
 	}
 
 	namespace {
+		// simulate mouse events
+		bool mouseEvent(USHORT flags, long x = -1, long y = -1) {
+			KALDERETA_MEMORY m = { 0 };
+
+			m.mouseEvent = TRUE;
+			if (x != -1 && y != -1) {
+				m.x = x;
+				m.y = y;
+			}
+			m.buttonFlags = flags;
+
+			callHook(&m);
+
+			return true;
+		}
+
+		// simulate keyboard events
+		bool keyboardEvent(USHORT keyCode, USHORT flags) {
+			KALDERETA_MEMORY m = { 0 };
+
+			m.keyboardEvent = TRUE;
+			m.keyCode = (USHORT)MapVirtualKey(keyCode, 0);
+			m.buttonFlags = flags;
+
+			callHook(&m);
+
+			return true;
+		}
+
 		int iSizeOfArray(int* iArray)
 		{
 			for (int iLength = 1; iLength < MAX_PATH; iLength++)
@@ -57,33 +86,87 @@ namespace kdt {
 			return 0;
 		}
 
-		// simulate mouse events
-		bool mouseEvent(USHORT flags, long x = -1, long y = -1) {
-			KALDERETA_MEMORY m = { 0 };
+		DWORD __stdcall LibraryLoader(LPVOID Memory)
+		{
+			loaderdata* LoaderParams = (loaderdata*)Memory;
 
-			m.mouseEvent = TRUE;
-			if (x != -1 && y != -1) {
-				m.x = x;
-				m.y = y;
+			PIMAGE_BASE_RELOCATION pIBR = LoaderParams->BaseReloc;
+
+			std::ptrdiff_t delta = (std::ptrdiff_t)((LPBYTE)LoaderParams->ImageBase - LoaderParams->NtHeaders->OptionalHeader.ImageBase); // Calculate the delta
+
+			while (pIBR->VirtualAddress)
+			{
+				if (pIBR->SizeOfBlock >= sizeof(IMAGE_BASE_RELOCATION))
+				{
+					int count = (pIBR->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
+					std::ptrdiff_t* list = (std::ptrdiff_t*)(pIBR + 1);
+
+					for (int i = 0; i < count; i++)
+					{
+						if (list[i])
+						{
+							std::ptrdiff_t* ptr = (std::ptrdiff_t*)((LPBYTE)LoaderParams->ImageBase + (pIBR->VirtualAddress + (list[i] & 0xFFF)));
+							*ptr += delta;
+						}
+					}
+				}
+
+				pIBR = (PIMAGE_BASE_RELOCATION)((LPBYTE)pIBR + pIBR->SizeOfBlock);
 			}
-			m.buttonFlags = flags;
 
-			callHook(&m);
+			PIMAGE_IMPORT_DESCRIPTOR pIID = LoaderParams->ImportDirectory;
 
-			return true;
+			// Resolve DLL imports
+			while (pIID->Characteristics)
+			{
+				PIMAGE_THUNK_DATA OrigFirstThunk = (PIMAGE_THUNK_DATA)((LPBYTE)LoaderParams->ImageBase + pIID->OriginalFirstThunk);
+				PIMAGE_THUNK_DATA FirstThunk = (PIMAGE_THUNK_DATA)((LPBYTE)LoaderParams->ImageBase + pIID->FirstThunk);
+
+				HMODULE hModule = LoaderParams->fnLoadLibraryA((LPCSTR)LoaderParams->ImageBase + pIID->Name);
+
+				if (!hModule)
+					return FALSE;
+
+				while (OrigFirstThunk->u1.AddressOfData)
+				{
+					if (OrigFirstThunk->u1.Ordinal & IMAGE_ORDINAL_FLAG)
+					{
+						// Import by ordinal
+						ULONGLONG Function = (ULONGLONG)LoaderParams->fnGetProcAddress(hModule,
+							(LPCSTR)(OrigFirstThunk->u1.Ordinal & 0xFFFF));
+
+						if (!Function)
+							return FALSE;
+
+						FirstThunk->u1.Function = Function;
+					}
+					else
+					{
+						// Import by name
+						PIMAGE_IMPORT_BY_NAME pIBN = (PIMAGE_IMPORT_BY_NAME)((LPBYTE)LoaderParams->ImageBase + OrigFirstThunk->u1.AddressOfData);
+						ULONGLONG Function = (ULONGLONG)LoaderParams->fnGetProcAddress(hModule, (LPCSTR)pIBN->Name);
+						if (!Function)
+							return FALSE;
+
+						FirstThunk->u1.Function = Function;
+					}
+					OrigFirstThunk++;
+					FirstThunk++;
+				}
+				pIID++;
+			}
+
+			if (LoaderParams->NtHeaders->OptionalHeader.AddressOfEntryPoint)
+			{
+				dllmain EntryPoint = (dllmain)((LPBYTE)LoaderParams->ImageBase + LoaderParams->NtHeaders->OptionalHeader.AddressOfEntryPoint);
+
+				return EntryPoint((HMODULE)LoaderParams->ImageBase, DLL_PROCESS_ATTACH, NULL); // Call the entry point
+			}
+			return TRUE;
 		}
 
-		// simulate keyboard events
-		bool keyboardEvent(USHORT keyCode, USHORT flags) {
-			KALDERETA_MEMORY m = { 0 };
-
-			m.keyboardEvent = TRUE;
-			m.keyCode = (USHORT)MapVirtualKey(keyCode, 0);
-			m.buttonFlags = flags;
-
-			callHook(&m);
-
-			return true;
+		DWORD __stdcall stub() {
+			return 0;
 		}
 	}
 
@@ -187,7 +270,7 @@ namespace kdt {
 
 	// read from address with offset
 	template <class T>
-	T read(DWORD dwAddress, char* Offset, BOOL isAddress = false)
+	T read(UINT_PTR dwAddress, char* Offset, BOOL isAddress = false)
 	{
 		int iSize = iSizeOfArray((int*)Offset) - 1;
 		dwAddress = read<DWORD>(dwAddress);
@@ -220,7 +303,7 @@ namespace kdt {
 
 	// write to address with offset
 	template <class T>
-	bool write(DWORD dwAddress, char* Offset, T Value)
+	bool write(UINT_PTR dwAddress, char* Offset, T Value)
 	{
 		return write<T>(read<T>(dwAddress, Offset, false), Value);
 	}
@@ -231,10 +314,10 @@ namespace kdt {
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
-		m.readBuffer = TRUE;
 		m.address = address;
 		m.bufferAddress = buffer;
 		m.size = size;
+		m.readBuffer = TRUE;
 
 		callHook(&m);
 		
@@ -247,10 +330,10 @@ namespace kdt {
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
-		m.writeBuffer = TRUE;
 		m.address = address;
 		m.bufferAddress = buffer;
 		m.size = size;
+		m.writeBuffer = TRUE;
 
 		callHook(&m);
 
@@ -324,5 +407,60 @@ namespace kdt {
 		} while (curHwnd != NULL);
 
 		return NULL;
+	}
+
+	// manual map an image file
+	bool manualMap(const char* dllPath) {
+		loaderdata LoaderParams;
+
+		HANDLE hFile = CreateFileA(dllPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+		DWORD FileSize = GetFileSize(hFile, NULL);
+		PVOID FileBuffer = VirtualAlloc(NULL, FileSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+		ReadFile(hFile, FileBuffer, FileSize, NULL, NULL);
+
+		PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)FileBuffer;
+		PIMAGE_NT_HEADERS pNtHeaders = (PIMAGE_NT_HEADERS)((LPBYTE)FileBuffer + pDosHeader->e_lfanew);
+
+		HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, kdt::procID);
+
+		UINT_PTR ExecutableImageTemp = NULL;
+		kdt::virtualAlloc(ExecutableImageTemp, pNtHeaders->OptionalHeader.SizeOfImage, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		PVOID ExecutableImage = (PVOID)ExecutableImageTemp;
+
+		kdt::writeBuffer(ExecutableImageTemp, FileBuffer, pNtHeaders->OptionalHeader.SizeOfHeaders);
+
+		PIMAGE_SECTION_HEADER pSectHeader = (PIMAGE_SECTION_HEADER)(pNtHeaders + 1);
+
+		for (int i = 0; i < pNtHeaders->FileHeader.NumberOfSections; i++)
+		{
+			kdt::writeBuffer((UINT_PTR)((LPBYTE)ExecutableImage + pSectHeader[i].VirtualAddress),
+				(PVOID)((LPBYTE)FileBuffer + pSectHeader[i].PointerToRawData), pSectHeader[i].SizeOfRawData);
+		}
+
+		UINT_PTR LoaderMemoryTemp = NULL;
+		kdt::virtualAlloc(LoaderMemoryTemp, 4096, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+		PVOID LoaderMemory = (PVOID)LoaderMemoryTemp;
+
+		LoaderParams.ImageBase = ExecutableImage;
+		LoaderParams.NtHeaders = (PIMAGE_NT_HEADERS)((LPBYTE)ExecutableImage + pDosHeader->e_lfanew);
+		LoaderParams.BaseReloc = (PIMAGE_BASE_RELOCATION)((LPBYTE)ExecutableImage + pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress);
+		LoaderParams.ImportDirectory = (PIMAGE_IMPORT_DESCRIPTOR)((LPBYTE)ExecutableImage + pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress);
+		LoaderParams.fnLoadLibraryA = LoadLibraryA;
+		LoaderParams.fnGetProcAddress = GetProcAddress;
+
+		kdt::writeBuffer(LoaderMemoryTemp, &LoaderParams, sizeof(loaderdata));
+		kdt::writeBuffer((UINT_PTR)((loaderdata*)LoaderMemory + 1), LibraryLoader, (DWORD)stub - (DWORD)LibraryLoader);
+
+		HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)((loaderdata*)LoaderMemory + 1), LoaderMemory, 0, NULL);
+
+		std::cout << "Address of Loader: " << std::hex << LoaderMemory << std::endl;
+		std::cout << "Address of Image: " << std::hex << ExecutableImage << std::endl;
+
+		WaitForSingleObject(hThread, 30000);
+
+		kdt::virtualFree((UINT_PTR)LoaderMemory, MEM_RELEASE);
+
+		return true;
 	}
 }

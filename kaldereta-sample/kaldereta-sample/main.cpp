@@ -7,11 +7,14 @@ int main() {
 
 	std::string PROCESS_NAME = "test-app-x64.exe";
 
-	kdt::procID = kdt::getProcessId(PROCESS_NAME.c_str());
-
 	printf("[-] Waiting for %s\n", PROCESS_NAME.c_str());
 
-	while (!kdt::procID) {}
+	while (!kdt::procID) {
+		kdt::procID = kdt::getProcessId(PROCESS_NAME.c_str());
+		Sleep(10);
+	}
+
+	Sleep(2000);
 
 	printf("[-] Found %s\n", PROCESS_NAME.c_str());
 
@@ -46,6 +49,10 @@ int main() {
 	//kdt::keyPress(0x41);
 
 	//kdt::moveTo(500, 500);
+
+	/*if (!kdt::manualMap("C:\\Users\\steph\\Documents\\projects\\others\\ManualMap\\x64\\Release\\SampleDll.dll")) {
+		printf("[-] Manual Map Failed");
+	}*/
 
 	for (;;);
 

@@ -116,8 +116,10 @@ bool mem::readBuffer(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size)
 
 	status = MmCopyVirtualMemory(process, (void*)address, (PEPROCESS)PsGetCurrentProcess(), (void*)buffer, size, KernelMode, &bytes);
 
-	if (!NT_SUCCESS(status))
+	if (!NT_SUCCESS(status)) {
+		DbgPrintEx(0, 0, "Kaldereta: [ReadBuffer] Failed, Code: %08X\n", status);
 		return false;
+	}
 	return true;
 }
 
@@ -138,6 +140,7 @@ bool mem::writeBuffer(HANDLE pid, uintptr_t address, void* buffer, SIZE_T size)
 	status = ZwQueryVirtualMemory(ZwCurrentProcess(), (PVOID)address, MemoryBasicInformation, &info, sizeof(info), NULL);
 
 	if (!NT_SUCCESS(status)) {
+		DbgPrintEx(0, 0, "Kaldereta: [WriteBuffer] Failed, Code: %08X\n", status);
 		KeUnstackDetachProcess(&state);
 		return false;
 	}
@@ -435,7 +438,7 @@ ULONG mem::getProcessId(UNICODE_STRING process_name) {
 	
 	status = ZwQuerySystemInformation(SystemProcessInformation, pInfo, 1024 * 1024, NULL);
 	if (!NT_SUCCESS(status)) {
-		DbgPrintEx(0, 0, "Kaldereta: [ProcessID] Failed 0x2\n");
+		DbgPrintEx(0, 0, "Kaldereta: [ProcessID] Failed 0x2, Code: %08X\n", status);
 		return 0;
 	}
 
@@ -443,10 +446,12 @@ ULONG mem::getProcessId(UNICODE_STRING process_name) {
 		if (RtlEqualUnicodeString(&pInfo->ImageName, &process_name, TRUE)) {
 			return (ULONG)pInfo->UniqueProcessId;
 		}
-		else if (pInfo->NextEntryOffset)
+		else if (pInfo->NextEntryOffset) {
 			pInfo = (PSYSTEM_PROCESS_INFORMATION)((PUCHAR)pInfo + pInfo->NextEntryOffset);
-		else
+		}
+		else {
 			break;
+		}
 	}
 
 	ExFreePoolWithTag(buffer, 'enoN');
