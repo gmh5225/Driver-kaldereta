@@ -40,4 +40,6 @@ Want to donate? [https://www.buymeacoffee.com/stephenasuncion](https://www.buyme
 
 ## License
 
+I was able to create this driver with the help of a bunch of sources. If you see your source-code in the codebase of this repository, contact me to properly credit you.
+
 [GNU General Public License v3.0](https://github.com/stephenasuncionDEV/kaldereta/blob/main/LICENSE)
