@@ -23,6 +23,7 @@
     <li>simulate mouse events</li>
     <li>simulate keyboard events</li>
     <li>pattern scan</li>
+    <li>manual map x64</li>
 </ul>
 
 ## Setup
