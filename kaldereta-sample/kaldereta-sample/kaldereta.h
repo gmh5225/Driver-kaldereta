@@ -298,6 +298,11 @@ namespace kdt {
 		mouseEvent(MOUSE_LEFT_BUTTON_UP);
 	}
 
+	// simulate mouse hold
+	static void hold() {
+		mouseEvent(MOUSE_LEFT_BUTTON_DOWN);
+	}
+
 	// simulate mouse movement
 	static void moveTo(long x, long y) {
 		mouseEvent(MOUSE_MOVE_ABSOLUTE | MOUSE_VIRTUAL_DESKTOP, x, y);
