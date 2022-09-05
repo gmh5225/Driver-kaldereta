@@ -3,9 +3,9 @@
 #include "kaldereta.h"
 
 int main() {
-	printf("[-] Kalderate User-Mode Sample\n");
+	printf("[-] Kalderata User-Mode Sample\n");
 
-	std::string PROCESS_NAME = "test-app-x64.exe";
+	std::string PROCESS_NAME = "test-app-x86.exe";
 
 	printf("[-] Waiting for %s\n", PROCESS_NAME.c_str());
 
@@ -52,7 +52,7 @@ int main() {
 
 	//x64 "C:\\Users\\steph\\Documents\\projects\\others\\ManualMap\\x64\\Release\\SampleDll.dll"
 
-	if (!kdt::manualMap("C:\\Users\\steph\\Documents\\projects\\others\\ManualMap\\x64\\Release\\SampleDll.dll")) {
+	if (!kdt::manualMap("C:\\Users\\steph\\Documents\\projects\\others\\ManualMap\\Release\\SampleDll.dll")) {
 		printf("[-] Manual Map Failed");
 	}
 
