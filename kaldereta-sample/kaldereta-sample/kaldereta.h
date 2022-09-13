@@ -15,6 +15,11 @@ namespace kdt {
 	static std::uintptr_t baseAddress;
 	static HWND windowHandle;
 	
+	struct EnumData {
+		DWORD dwProcessId;
+		HWND hWnd;
+	};
+
 	// hook win function to communicate with driver
 	template<typename ... A>
 	uint64_t callHook(const A ... args)
@@ -249,6 +254,18 @@ namespace kdt {
 		DWORD __stdcall stub() {
 			return 0;
 		}
+
+		BOOL CALLBACK EnumProc(HWND hWnd, LPARAM lParam) {
+			EnumData& ed = *(EnumData*)lParam;
+			DWORD dwProcessId = 0x0;
+			GetWindowThreadProcessId(hWnd, &dwProcessId);
+			if (ed.dwProcessId == dwProcessId) {
+				ed.hWnd = hWnd;
+				SetLastError(ERROR_SUCCESS);
+				return FALSE;
+			}
+			return TRUE;
+		}
 	}
 
 	// get process id
@@ -256,8 +273,8 @@ namespace kdt {
 		KALDERETA_MEMORY m = { 0 };
 
 		m.pid = procID;
-		m.reqProcessId = TRUE;
 		m.moduleName = process_name;
+		m.reqProcessId = TRUE;
 
 		callHook(&m);
 
@@ -274,14 +291,14 @@ namespace kdt {
 		m.moduleName = moduleName;
 
 		callHook(&m);
-		
+
 		imageSize = m.imageSize;
 
 		return m.baseAddress;
 	}
 
 	// change protection of a memory region
-	static bool virtualProtect(uint64_t address, uint32_t protection, std::size_t size, uint32_t &old_protection)
+	static bool virtualProtect(uint64_t address, uint32_t protection, std::size_t size, uint32_t& old_protection)
 	{
 		KALDERETA_MEMORY m = { 0 };
 
@@ -401,7 +418,7 @@ namespace kdt {
 		m.readBuffer = TRUE;
 
 		callHook(&m);
-		
+
 		return true;
 	}
 
@@ -428,14 +445,14 @@ namespace kdt {
 		mouseEvent(MOUSE_LEFT_BUTTON_UP);
 	}
 
+	// simulate mouse movement
+	static void moveTo(long x, long y) {
+		mouseEvent(MOUSE_MOVE_ABSOLUTE, x, y);
+	}
+
 	// simulate mouse hold
 	static void hold() {
 		mouseEvent(MOUSE_LEFT_BUTTON_DOWN);
-	}
-
-	// simulate mouse movement
-	static void moveTo(long x, long y) {
-		mouseEvent(MOUSE_MOVE_ABSOLUTE | MOUSE_VIRTUAL_DESKTOP, x, y);
 	}
 
 	// simulate key press
@@ -446,7 +463,7 @@ namespace kdt {
 	}
 
 	// pattern scan
-	uintptr_t patternScan(char* pattern, char* mask) {
+	static uintptr_t patternScan(char* pattern, char* mask) {
 		uintptr_t start = baseAddress;
 		uintptr_t end = start + imageSize;
 
@@ -475,18 +492,13 @@ namespace kdt {
 	}
 
 	// get window handle
-	HWND getHwnd(DWORD proc_id) {
-		HWND curHwnd = NULL;
-		do
-		{
-			curHwnd = FindWindowEx(NULL, curHwnd, NULL, NULL);
-			DWORD dwProcID = 0;
-			GetWindowThreadProcessId(curHwnd, &dwProcID);
-			if (dwProcID == proc_id) {
-				return curHwnd;
-			}
-		} while (curHwnd != NULL);
-
+	static HWND getHwnd(DWORD proc_id)
+	{
+		EnumData ed = { proc_id };
+		if (!EnumWindows(EnumProc, (LPARAM)&ed) &&
+			(GetLastError() == ERROR_SUCCESS)) {
+			return ed.hWnd;
+		}
 		return NULL;
 	}
 
@@ -494,13 +506,7 @@ namespace kdt {
 	bool manualMap(const char* dllPath) {
 		loaderdata LoaderParams;
 
-		BOOL is64 = FALSE;
-
 		HANDLE hFile = CreateFileA(dllPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-
-		IsWow64Process(hFile, &is64);
-
-		std::cout << is64 << std::endl;
 
 		DWORD FileSize = GetFileSize(hFile, NULL);
 		PVOID FileBuffer = VirtualAlloc(NULL, FileSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
